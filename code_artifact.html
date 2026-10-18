@@ -897,6 +897,7 @@
 
         document.getElementById('btn-speak-question').addEventListener('click', (e) => {
             e.stopPropagation();
+            primeSpeech(); // 该按钮阻止了事件冒泡，需显式解锁语音（保险）
             playSfx('tap');
             speakCurrentProblem();
         });
