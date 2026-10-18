@@ -2,10 +2,299 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="refresh" content="0; url=./code_artifact.html">
-    <title>《咯咯哒！憋不住啦！》趣味20以内数学大冒险</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>椰子和可乐的游戏小屋</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        html, body { height: 100%; }
+
+        body {
+            font-family: system-ui, "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+            display: flex;
+            flex-direction: column;
+            background: #FFF9EF;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        header {
+            text-align: center;
+            padding: 14px 10px 10px;
+            background: #FFF9EF;
+        }
+
+        header h1 {
+            font-size: clamp(19px, 4.6vw, 30px);
+            font-weight: 900;
+            color: #4A3728;
+            letter-spacing: 1px;
+        }
+
+        header p {
+            margin-top: 4px;
+            font-size: clamp(12px, 3vw, 16px);
+            font-weight: 700;
+            color: #A08A6E;
+        }
+
+        main {
+            flex: 1;
+            display: flex;
+            min-height: 0;
+        }
+
+        .panel {
+            flex: 1;
+            min-width: 0;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 10px 8px 18px;
+            text-decoration: none;
+            transition: filter .15s;
+        }
+
+        .panel:active { filter: brightness(.96); }
+        .panel.kele { border-left: 6px solid #FFF9EF; }
+
+        /* ===== 椰子面板（农场暖色）===== */
+        .panel.yezi { background: linear-gradient(180deg, #FFF6D8 0%, #FFE7A3 100%); }
+        .panel.yezi .who { color: #7A4A12; }
+        .panel.yezi .game-name { color: #5D3A1A; }
+        .panel.yezi .go { background: #F59E0B; }
+
+        /* ===== 可乐面板（高铁蓝白 + 可乐红）===== */
+        .panel.kele { background: linear-gradient(180deg, #EAF3FF 0%, #CFE3FF 100%); }
+        .panel.kele::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: repeating-linear-gradient(115deg, rgba(255,255,255,.4) 0 14px, transparent 14px 46px);
+            pointer-events: none;
+        }
+        .panel.kele .who { color: #1D4ED8; }
+        .panel.kele .game-name { color: #173A7A; }
+        .panel.kele .go { background: #DC2626; }
+
+        .scene {
+            position: relative;
+            flex: 1;
+            min-height: 0;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .hero { width: min(56%, 200px); height: auto; position: relative; z-index: 2; }
+
+        /* 椰子面板：草地 + 母鸡 + 蛋 */
+        .grass {
+            position: absolute;
+            bottom: -34px; left: -10%;
+            width: 120%; height: 74px;
+            background: #8CC152;
+            border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+            z-index: 1;
+        }
+        .deco-hen {
+            position: absolute;
+            right: 4%; bottom: 6%;
+            width: min(30%, 92px);
+            z-index: 3;
+        }
+
+        /* 可乐面板：高铁 */
+        .deco-train {
+            position: absolute;
+            left: 2%; right: 2%; bottom: 4%;
+            width: 96%;
+            z-index: 3;
+        }
+
+        .who {
+            position: relative; z-index: 2;
+            margin-top: 6px;
+            font-size: clamp(24px, 7vw, 44px);
+            font-weight: 900;
+            letter-spacing: 2px;
+        }
+
+        .game-name {
+            position: relative; z-index: 2;
+            margin-top: 2px;
+            font-size: clamp(13px, 3.6vw, 19px);
+            font-weight: 700;
+            text-align: center;
+        }
+
+        .go {
+            position: relative; z-index: 2;
+            margin-top: 10px;
+            display: inline-block;
+            padding: 9px 24px;
+            border-radius: 999px;
+            color: #fff;
+            font-size: clamp(13px, 3.6vw, 17px);
+            font-weight: 900;
+            box-shadow: 0 6px 0 rgba(0, 0, 0, .16);
+            transition: transform .12s, box-shadow .12s;
+        }
+
+        .panel:active .go { transform: translateY(4px); box-shadow: 0 2px 0 rgba(0, 0, 0, .16); }
+
+        @media (hover: hover) {
+            .panel:hover { filter: brightness(1.02); }
+            .panel:hover .go { transform: scale(1.05); }
+        }
+
+        /* ===== 动画 ===== */
+        @keyframes sway {
+            0%, 100% { transform: rotate(-3deg); }
+            50% { transform: rotate(3deg); }
+        }
+        .coconut { transform-origin: 50% 88%; animation: sway 3.2s ease-in-out infinite; }
+
+        @keyframes bob {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-6px); }
+        }
+        .cola-can { animation: bob 2.4s ease-in-out infinite; }
+
+        @keyframes rise {
+            0% { transform: translateY(0); opacity: .8; }
+            100% { transform: translateY(-34px); opacity: 0; }
+        }
+        .bub { animation: rise 2.2s linear infinite; }
+        .bub.b2 { animation-delay: .7s; }
+        .bub.b3 { animation-delay: 1.4s; }
+
+        @keyframes henBob {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-3px); }
+        }
+        .deco-hen { animation: henBob 1.6s ease-in-out infinite; }
+
+        @keyframes trainRide {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-3px); }
+        }
+        .deco-train { animation: trainRide .4s ease-in-out infinite; }
+
+        @keyframes zoomOut {
+            0% { transform: translateX(0); opacity: 1; }
+            100% { transform: translateX(-26px); opacity: 0; }
+        }
+        .zoomline { animation: zoomOut .5s linear infinite; }
+        .zoomline.z2 { animation-delay: .17s; }
+        .zoomline.z3 { animation-delay: .34s; }
+    </style>
 </head>
 <body>
-    <p>正在进入游戏…如果没有自动跳转，请 <a href="./code_artifact.html">点这里</a>。</p>
+    <header>
+        <h1>椰子和可乐的游戏小屋</h1>
+        <p>找到写着自己名字的游戏，点一下就开始！</p>
+    </header>
+    <main>
+        <!-- ===== 椰子：咯咯哒憋不住了 ===== -->
+        <a class="panel yezi" href="./code_artifact.html" aria-label="椰子的游戏：咯咯哒憋不住了">
+            <div class="scene">
+                <div class="grass"></div>
+                <!-- 母鸡和蛋装饰 -->
+                <svg class="deco-hen" viewBox="0 0 120 110" aria-hidden="true">
+                    <path d="M22 62 Q6 46 16 32 Q24 46 32 52 Z" fill="#F3EEE2" stroke="#E0D9C8" stroke-width="2"/>
+                    <ellipse cx="60" cy="70" rx="42" ry="32" fill="#FFFFFF" stroke="#E5E0D5" stroke-width="3"/>
+                    <circle cx="56" cy="30" r="6" fill="#E23B3B"/>
+                    <circle cx="66" cy="26" r="7" fill="#E23B3B"/>
+                    <circle cx="76" cy="31" r="6" fill="#E23B3B"/>
+                    <path d="M94 60 L112 66 L94 72 Z" fill="#F5A623"/>
+                    <circle cx="86" cy="54" r="4" fill="#333333"/>
+                    <ellipse cx="36" cy="100" rx="11" ry="14" fill="#FFE9B8" stroke="#E8C87E" stroke-width="3"/>
+                </svg>
+                <!-- 椰子主角 -->
+                <svg class="hero coconut" viewBox="0 0 200 210" aria-hidden="true">
+                    <defs>
+                        <radialGradient id="husk" cx="38%" cy="30%" r="78%">
+                            <stop offset="0%" stop-color="#B07A42"/>
+                            <stop offset="55%" stop-color="#8B5A2B"/>
+                            <stop offset="100%" stop-color="#5F3B18"/>
+                        </radialGradient>
+                    </defs>
+                    <path d="M98 46 C88 24 66 20 56 29 C70 34 84 40 98 48 Z" fill="#57B84A"/>
+                    <path d="M102 46 C112 24 134 20 144 29 C130 34 116 40 102 48 Z" fill="#3E9E3A"/>
+                    <circle cx="100" cy="124" r="74" fill="url(#husk)"/>
+                    <path d="M62 66 Q48 124 62 184" stroke="#5A3714" stroke-width="5" fill="none" opacity=".4"/>
+                    <path d="M138 66 Q152 124 138 184" stroke="#5A3714" stroke-width="5" fill="none" opacity=".4"/>
+                    <circle cx="86" cy="68" r="6" fill="#402508"/>
+                    <circle cx="108" cy="64" r="6" fill="#402508"/>
+                    <circle cx="97" cy="81" r="6" fill="#402508"/>
+                    <ellipse cx="76" cy="126" rx="13" ry="15" fill="#FFFFFF"/>
+                    <ellipse cx="124" cy="126" rx="13" ry="15" fill="#FFFFFF"/>
+                    <circle cx="79" cy="129" r="6" fill="#2B1B08"/>
+                    <circle cx="121" cy="129" r="6" fill="#2B1B08"/>
+                    <ellipse cx="58" cy="150" rx="9" ry="6" fill="#E8985A" opacity=".7"/>
+                    <ellipse cx="142" cy="150" rx="9" ry="6" fill="#E8985A" opacity=".7"/>
+                    <path d="M84 152 Q100 166 116 152" stroke="#2B1B08" stroke-width="6" fill="none" stroke-linecap="round"/>
+                </svg>
+            </div>
+            <div class="who">椰子的</div>
+            <div class="game-name">咯咯哒！憋不住啦！</div>
+            <span class="go">点我开始</span>
+        </a>
+
+        <!-- ===== 可乐：高铁数学 ===== -->
+        <a class="panel kele" href="./kele_high_speed_train_math.html" aria-label="可乐的游戏：可乐的小小高铁数学探险">
+            <div class="scene">
+                <!-- 可乐罐主角 -->
+                <svg class="hero cola-can" viewBox="0 0 200 220" aria-hidden="true">
+                    <defs>
+                        <linearGradient id="canBody" x1="0" y1="0" x2="1" y2="0">
+                            <stop offset="0%" stop-color="#C41E1E"/>
+                            <stop offset="45%" stop-color="#F03A3A"/>
+                            <stop offset="100%" stop-color="#A91212"/>
+                        </linearGradient>
+                    </defs>
+                    <circle class="bub" cx="152" cy="118" r="5" fill="#FFFFFF" opacity=".8"/>
+                    <circle class="bub b2" cx="162" cy="92" r="4" fill="#FFFFFF" opacity=".7"/>
+                    <circle class="bub b3" cx="148" cy="66" r="3.5" fill="#FFFFFF" opacity=".6"/>
+                    <path d="M62 64 h76 v112 q0 16 -14 16 h-48 q-14 0 -14 -16 z" fill="url(#canBody)"/>
+                    <ellipse cx="100" cy="60" rx="40" ry="11" fill="#D9DDE2"/>
+                    <ellipse cx="100" cy="56" rx="40" ry="11" fill="#EFF2F5"/>
+                    <circle cx="100" cy="52" r="7" fill="none" stroke="#98A0A8" stroke-width="4"/>
+                    <path d="M62 92 Q100 80 138 92 L138 112 Q100 100 62 112 Z" fill="#FFFFFF" opacity=".95"/>
+                    <circle cx="100" cy="146" r="27" fill="#FFF6E8"/>
+                    <circle cx="91" cy="142" r="4" fill="#5A3A1A"/>
+                    <circle cx="109" cy="142" r="4" fill="#5A3A1A"/>
+                    <path d="M88 152 Q100 163 112 152" stroke="#5A3A1A" stroke-width="4.5" fill="none" stroke-linecap="round"/>
+                    <rect x="72" y="76" width="9" height="94" rx="4.5" fill="#FFFFFF" opacity=".28"/>
+                </svg>
+                <!-- 高铁装饰 -->
+                <svg class="deco-train" viewBox="0 0 260 122" aria-hidden="true">
+                    <g class="zoomline" fill="#B9CFF0">
+                        <rect x="0" y="50" width="26" height="6" rx="3"/>
+                        <rect x="0" y="66" width="40" height="6" rx="3"/>
+                        <rect x="0" y="82" width="18" height="6" rx="3"/>
+                    </g>
+                    <path d="M14 98 L14 62 Q14 40 42 36 L150 36 Q208 42 240 74 Q248 82 244 92 Q240 100 226 100 L28 100 Q14 100 14 98 Z"
+                          fill="#F7FAFF" stroke="#24457C" stroke-width="4"/>
+                    <rect x="14" y="82" width="226" height="9" fill="#2F6FBF"/>
+                    <rect x="36" y="48" width="18" height="17" rx="5" fill="#9CC4E8"/>
+                    <rect x="62" y="46" width="18" height="17" rx="5" fill="#9CC4E8"/>
+                    <rect x="88" y="45" width="18" height="17" rx="5" fill="#9CC4E8"/>
+                    <path d="M178 52 Q208 58 226 76 L190 76 Q180 76 178 66 Z" fill="#9CC4E8"/>
+                    <circle cx="238" cy="90" r="4" fill="#FFD34D"/>
+                    <rect x="0" y="106" width="260" height="5" rx="2.5" fill="#7C879B"/>
+                    <rect x="20" y="113" width="24" height="6" rx="2" fill="#A9B2C0"/>
+                    <rect x="120" y="113" width="24" height="6" rx="2" fill="#A9B2C0"/>
+                    <rect x="220" y="113" width="24" height="6" rx="2" fill="#A9B2C0"/>
+                </svg>
+            </div>
+            <div class="who">可乐的</div>
+            <div class="game-name">可乐的小小高铁数学探险</div>
+            <span class="go">点我开始</span>
+        </a>
+    </main>
 </body>
 </html>

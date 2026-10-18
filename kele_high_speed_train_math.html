@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>可乐的小小高铁数学探险</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;700&family=Noto+Sans+SC:wght@500;700;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Fredoka', 'Noto Sans SC', system-ui, -apple-system, sans-serif;
+            touch-action: manipulation;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* 3D and soft UI bounce effects */
+        .btn-press {
+            transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 10px 0 rgba(0, 0, 0, 0.18);
+        }
+        .btn-press:active {
+            transform: translateY(6px);
+            box-shadow: 0 4px 0 rgba(0, 0, 0, 0.18);
+        }
+
+        /* Train shaking animation */
+        @keyframes trainRide {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-4px); }
+        }
+        .train-running {
+            animation: trainRide 0.35s infinite ease-in-out;
+        }
+
+        /* Fast train forward dash */
+        @keyframes trainZoom {
+            0% { transform: translateX(0); }
+            40% { transform: translateX(45px); }
+            100% { transform: translateX(0); }
+        }
+        .train-zoom {
+            animation: trainZoom 0.9s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+
+        /* Animal entrance & departure bounce */
+        @keyframes animalHopIn {
+            0% { transform: translateY(40px) scale(0.4); opacity: 0; }
+            70% { transform: translateY(-10px) scale(1.15); opacity: 1; }
+            100% { transform: translateY(0) scale(1); }
+        }
+        .animal-hop-in {
+            animation: animalHopIn 0.55s ease-out forwards;
+        }
+
+        @keyframes animalHopOut {
+            0% { transform: translateY(0) scale(1); opacity: 1; }
+            50% { transform: translateY(-20px) scale(1.1); }
+            100% { transform: translateY(60px) scale(0.2); opacity: 0; }
+        }
+        .animal-hop-out {
+            animation: animalHopOut 0.5s ease-in forwards;
+        }
+
+        /* Pulse glow for counting hint */
+        @keyframes pulseGlow {
+            0%, 100% { transform: scale(1); filter: drop-shadow(0 0 4px rgba(255,215,0,0.4)); }
+            50% { transform: scale(1.22); filter: drop-shadow(0 0 14px rgba(255,215,0,0.9)); }
+        }
+        .highlight-seat {
+            animation: pulseGlow 0.6s infinite alternate;
+        }
+
+        /* Cloud drift */
+        @keyframes cloudFloat {
+            0% { transform: translateX(110vw); }
+            100% { transform: translateX(-150px); }
+        }
+        .cloud-1 { animation: cloudFloat 28s linear infinite; }
+        .cloud-2 { animation: cloudFloat 38s linear infinite 14s; }
+    </style>
+</head>
+<body class="bg-gradient-to-b from-sky-300 via-sky-200 to-emerald-100 min-h-screen flex flex-col justify-between overflow-x-hidden p-2 sm:p-4 text-slate-800">
+
+    <!-- Top status bar -->
+    <header class="w-full max-w-4xl mx-auto flex items-center justify-between px-3 py-2 bg-white/70 backdrop-blur-md rounded-2xl shadow-sm border-2 border-white/80">
+        <div class="flex items-center space-x-2">
+            <span class="text-3xl">🚄</span>
+            <div>
+                <h1 class="text-base sm:text-xl font-black text-blue-600 flex items-center gap-1">
+                    <span>可乐列车长</span>
+                    <span class="text-xs bg-amber-400 text-amber-950 font-bold px-2 py-0.5 rounded-full">5以内加减法</span>
+                </h1>
+                <p class="text-[11px] sm:text-xs text-slate-500 font-bold" id="subtitle-tip">听一听，数一数车上有几位乘客？</p>
+            </div>
+        </div>
+
+        <div class="flex items-center space-x-2 sm:space-x-3">
+            <!-- Stars earned -->
+            <div class="flex items-center bg-amber-50 px-3 py-1 rounded-xl border-2 border-amber-300">
+                <span class="text-xl sm:text-2xl mr-1">⭐</span>
+                <span id="star-count" class="text-lg sm:text-xl font-black text-amber-600">0</span>
+            </div>
+
+            <!-- Repeat Speech Button -->
+            <button id="btn-replay-audio" class="p-2 sm:px-3 sm:py-2 bg-indigo-500 text-white rounded-xl shadow-md active:scale-95 flex items-center space-x-1" title="再听一遍语音">
+                <span class="text-xl">📢</span>
+                <span class="hidden sm:inline text-xs font-bold">听题目</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Scenic backdrop with drifting clouds and rails -->
+    <main class="w-full max-w-4xl mx-auto flex-1 flex flex-col justify-center items-center relative my-2 sm:my-4">
+        
+        <!-- Clouds drifting in the sky -->
+        <div class="w-full absolute top-0 left-0 h-24 overflow-hidden pointer-events-none opacity-80">
+            <div class="cloud-1 absolute top-2 text-4xl">☁️</div>
+            <div class="cloud-2 absolute top-8 text-5xl">☁️</div>
+        </div>
+
+        <!-- Mode badge (Boarding/Alighting indicator) -->
+        <div id="action-badge" class="mb-2 px-4 py-1.5 rounded-full text-base sm:text-lg font-black shadow-md flex items-center space-x-2 bg-emerald-500 text-white border-2 border-white">
+            <span id="action-icon">➕</span>
+            <span id="action-desc">动物朋友上车啦！</span>
+        </div>
+
+        <!-- The High-Speed Train Complex -->
+        <div id="train-container" class="w-full flex items-end justify-center relative train-running transition-transform duration-500 py-3">
+            
+            <!-- High-speed Train Engine (Front) -->
+            <div class="relative w-24 sm:w-36 h-28 sm:h-36 bg-gradient-to-r from-red-500 via-rose-500 to-white rounded-r-[5rem] rounded-l-xl shadow-xl border-4 border-slate-700 flex flex-col justify-end p-2 z-20">
+                <!-- Windshield glass -->
+                <div class="absolute top-4 right-3 w-12 sm:w-16 h-10 sm:h-12 bg-sky-200/90 rounded-r-3xl rounded-tl-xl border-2 border-slate-700 overflow-hidden shadow-inner flex items-center justify-center">
+                    <span class="text-xl sm:text-2xl animate-bounce">👦</span>
+                </div>
+                <!-- Conductor Kele Label -->
+                <div class="bg-amber-400 text-amber-950 font-black text-[10px] sm:text-xs text-center py-0.5 rounded-full border border-slate-700 shadow-sm mt-auto mb-1">
+                    可乐号
+                </div>
+                <!-- Headlight -->
+                <div class="absolute bottom-4 right-2 w-4 sm:w-5 h-4 sm:h-5 bg-amber-300 rounded-full border-2 border-slate-800 shadow-md animate-pulse"></div>
+            </div>
+
+            <!-- Passenger Carriage (With exactly 5 big picture windows) -->
+            <div class="relative bg-white border-4 border-slate-700 rounded-2xl shadow-2xl p-2 sm:p-3 flex items-center -ml-2 z-10">
+                <!-- Red & Blue Speed Stripes -->
+                <div class="absolute top-2 left-0 w-full h-1.5 bg-red-500"></div>
+                <div class="absolute top-4 left-0 w-full h-1 bg-blue-600"></div>
+
+                <!-- 5 Passenger Windows -->
+                <div class="grid grid-cols-5 gap-1.5 sm:gap-3 mt-4" id="train-seats">
+                    <!-- Seats dynamically populated: exactly 5 slots -->
+                </div>
+
+                <!-- Train carriage coupling wheels -->
+                <div class="absolute -bottom-4 left-4 w-7 h-7 bg-slate-800 rounded-full border-2 border-slate-400 flex items-center justify-center">
+                    <div class="w-2.5 h-2.5 bg-slate-400 rounded-full"></div>
+                </div>
+                <div class="absolute -bottom-4 right-6 w-7 h-7 bg-slate-800 rounded-full border-2 border-slate-400 flex items-center justify-center">
+                    <div class="w-2.5 h-2.5 bg-slate-400 rounded-full"></div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Train Track Bed -->
+        <div class="w-full max-w-3xl h-6 bg-slate-700 rounded-lg flex items-center justify-around px-2 shadow-inner border-t-2 border-slate-500 mt-2">
+            <div class="w-4 h-full bg-amber-800 border-x border-slate-900"></div>
+            <div class="w-4 h-full bg-amber-800 border-x border-slate-900"></div>
+            <div class="w-4 h-full bg-amber-800 border-x border-slate-900"></div>
+            <div class="w-4 h-full bg-amber-800 border-x border-slate-900"></div>
+            <div class="w-4 h-full bg-amber-800 border-x border-slate-900"></div>
+            <div class="w-4 h-full bg-amber-800 border-x border-slate-900"></div>
+            <div class="w-4 h-full bg-amber-800 border-x border-slate-900"></div>
+            <div class="w-4 h-full bg-amber-800 border-x border-slate-900"></div>
+        </div>
+
+        <!-- Platform feedback banner / voice bubble -->
+        <div id="speech-bubble" class="mt-3 bg-white/95 border-3 border-amber-400 px-4 py-2 rounded-2xl shadow-lg text-slate-800 font-bold text-sm sm:text-base flex items-center gap-2 max-w-md text-center animate-fade-in">
+            <span class="text-2xl animate-pulse">🚂</span>
+            <span id="speech-bubble-text">可乐，准备好出发了吗？点一下开始发车吧！</span>
+        </div>
+
+    </main>
+
+    <!-- Visual tactile keypad with numbers 1 to 5 paired with dots for non-readers -->
+    <footer class="w-full max-w-2xl mx-auto pb-4 pt-1 px-2">
+        <div class="text-center mb-2">
+            <span class="text-xs sm:text-sm font-black text-slate-600 bg-white/80 px-3 py-1 rounded-full shadow-sm">
+                👇 可乐，点一点对应的数字吧：
+            </span>
+        </div>
+        
+        <div class="grid grid-cols-5 gap-2 sm:gap-4">
+            <!-- 1 Button -->
+            <button onclick="handleAnswer(1)" class="btn-press bg-rose-400 hover:bg-rose-500 text-white rounded-2xl p-2 sm:p-3 flex flex-col items-center justify-between h-20 sm:h-24 border-b-4 border-rose-600">
+                <span class="text-2xl sm:text-4xl font-black">1</span>
+                <div class="flex items-center justify-center gap-0.5">
+                    <span class="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-white shadow-sm"></span>
+                </div>
+            </button>
+
+            <!-- 2 Button -->
+            <button onclick="handleAnswer(2)" class="btn-press bg-amber-400 hover:bg-amber-500 text-white rounded-2xl p-2 sm:p-3 flex flex-col items-center justify-between h-20 sm:h-24 border-b-4 border-amber-600">
+                <span class="text-2xl sm:text-4xl font-black">2</span>
+                <div class="flex items-center justify-center gap-0.5">
+                    <span class="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-white shadow-sm"></span>
+                    <span class="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-white shadow-sm"></span>
+                </div>
+            </button>
+
+            <!-- 3 Button -->
+            <button onclick="handleAnswer(3)" class="btn-press bg-emerald-400 hover:bg-emerald-500 text-white rounded-2xl p-2 sm:p-3 flex flex-col items-center justify-between h-20 sm:h-24 border-b-4 border-emerald-600">
+                <span class="text-2xl sm:text-4xl font-black">3</span>
+                <div class="flex flex-wrap items-center justify-center gap-0.5 max-w-[28px]">
+                    <span class="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-white shadow-sm"></span>
+                    <span class="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-white shadow-sm"></span>
+                    <span class="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-white shadow-sm"></span>
+                </div>
+            </button>
+
+            <!-- 4 Button -->
+            <button onclick="handleAnswer(4)" class="btn-press bg-sky-400 hover:bg-sky-500 text-white rounded-2xl p-2 sm:p-3 flex flex-col items-center justify-between h-20 sm:h-24 border-b-4 border-sky-600">
+                <span class="text-2xl sm:text-4xl font-black">4</span>
+                <div class="grid grid-cols-2 gap-0.5">
+                    <span class="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-white shadow-sm"></span>
+                    <span class="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-white shadow-sm"></span>
+                    <span class="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-white shadow-sm"></span>
+                    <span class="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-white shadow-sm"></span>
+                </div>
+            </button>
+
+            <!-- 5 Button -->
+            <button onclick="handleAnswer(5)" class="btn-press bg-indigo-400 hover:bg-indigo-500 text-white rounded-2xl p-2 sm:p-3 flex flex-col items-center justify-between h-20 sm:h-24 border-b-4 border-indigo-600">
+                <span class="text-2xl sm:text-4xl font-black">5</span>
+                <div class="flex flex-wrap justify-center items-center gap-0.5 max-w-[32px]">
+                    <span class="w-2 sm:w-2.5 h-2 sm:h-2.5 rounded-full bg-white shadow-sm"></span>
+                    <span class="w-2 sm:w-2.5 h-2 sm:h-2.5 rounded-full bg-white shadow-sm"></span>
+                    <span class="w-2 sm:w-2.5 h-2 sm:h-2.5 rounded-full bg-white shadow-sm"></span>
+                    <span class="w-2 sm:w-2.5 h-2 sm:h-2.5 rounded-full bg-white shadow-sm"></span>
+                    <span class="w-2 sm:w-2.5 h-2 sm:h-2.5 rounded-full bg-white shadow-sm"></span>
+                </div>
+            </button>
+        </div>
+    </footer>
+
+    <script>
+        // Cute emoji passengers that small children adore
+        const ANIMAL_FRIENDS = [
+            { icon: '🐼', name: '小熊猫' },
+            { icon: '🐰', name: '小白兔' },
+            { icon: '🐥', name: '小鸭子' },
+            { icon: '🐶', name: '小狗' },
+            { icon: '🐱', name: '小花猫' },
+            { icon: '🐻', name: '小棕熊' },
+            { icon: '🐵', name: '小猴子' },
+            { icon: '🐸', name: '小青蛙' }
+        ];
+
+        // State variables
+        let currentProblem = null;
+        let starCount = 0;
+        let isInteractionLocked = false;
+        let audioContextStarted = false;
+        let synth = null;
+        let lastSpokenText = "";
+
+        // Web Audio / Tone.js initialization for safe sound playback without external assets
+        function initSound() {
+            if (!audioContextStarted) {
+                Tone.start();
+                synth = new Tone.PolySynth(Tone.Synth).toDestination();
+                synth.volume.value = -6;
+                audioContextStarted = true;
+            }
+        }
+
+        // Play custom cartoon sound effects
+        function playSfx(type) {
+            initSound();
+            if (!synth) return;
+            const now = Tone.now();
+            if (type === 'whistle') {
+                // High-speed train chime / whistle
+                synth.triggerAttackRelease(["C5", "G5"], "8n", now);
+                synth.triggerAttackRelease(["E5", "C6"], "4n", now + 0.15);
+            } else if (type === 'correct') {
+                // High joyful arpeggio
+                synth.triggerAttackRelease("C5", "16n", now);
+                synth.triggerAttackRelease("E5", "16n", now + 0.08);
+                synth.triggerAttackRelease("G5", "16n", now + 0.16);
+                synth.triggerAttackRelease("C6", "8n", now + 0.24);
+            } else if (type === 'gentle-retry') {
+                // Soft dual chord for gentle correction (not harsh)
+                synth.triggerAttackRelease(["G4", "B4"], "8n", now);
+                synth.triggerAttackRelease(["E4", "G4"], "8n", now + 0.18);
+            } else if (type === 'pop') {
+                synth.triggerAttackRelease("A5", "32n", now);
+            }
+        }
+
+        // Speech synthesis specifically personalized for "可乐"
+        function speak(text, rate = 0.88, callback = null) {
+            lastSpokenText = text;
+            updateSpeechBubble(text);
+
+            if (!('speechSynthesis' in window)) {
+                if (callback) callback();
+                return;
+            }
+
+            window.speechSynthesis.cancel(); // Cancel any existing speech
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'zh-CN';
+            utterance.rate = rate; // Gently slower for preschoolers
+            utterance.pitch = 1.35; // Cheerful friendly pitch
+
+            // Try to find a standard clear female/childish Chinese voice if available
+            const voices = window.speechSynthesis.getVoices();
+            const zhVoice = voices.find(v => v.lang.includes('zh') || v.lang.includes('cmn'));
+            if (zhVoice) {
+                utterance.voice = zhVoice;
+            }
+
+            if (callback) {
+                utterance.onend = () => callback();
+                utterance.onerror = () => callback();
+            }
+
+            window.speechSynthesis.speak(utterance);
+        }
+
+        function updateSpeechBubble(text) {
+            const bubbleText = document.getElementById('speech-bubble-text');
+            bubbleText.textContent = text;
+        }
+
+        // Strictly creates situations where total passengers <= 5 and count >= 1
+        function generateMathProblem() {
+            // Randomly choose Addition (上客) or Subtraction (下客)
+            const isAddition = Math.random() > 0.45; // slightly higher chance of addition
+            const randomAnimal = ANIMAL_FRIENDS[Math.floor(Math.random() * ANIMAL_FRIENDS.length)];
+
+            if (isAddition) {
+                // Target sum between 2 and 5
+                const targetSum = Math.floor(Math.random() * 4) + 2; // 2, 3, 4, 5
+                const initialCount = Math.floor(Math.random() * (targetSum - 1)) + 1; // 1 to targetSum-1
+                const addCount = targetSum - initialCount;
+
+                return {
+                    type: 'add',
+                    animal: randomAnimal,
+                    initial: initialCount,
+                    change: addCount,
+                    target: targetSum,
+                    questionVoice: `车上坐着 ${initialCount} 只${randomAnimal.name}，又上来了 ${addCount} 只。可乐，现在一共有几只呢？`
+                };
+            } else {
+                // Subtraction: Initial between 2 and 5, subtract at least 1, leaving >= 1
+                const initialCount = Math.floor(Math.random() * 4) + 2; // 2, 3, 4, 5
+                const subCount = Math.floor(Math.random() * (initialCount - 1)) + 1; // 1 to initialCount-1
+                const targetRemainder = initialCount - subCount;
+
+                return {
+                    type: 'sub',
+                    animal: randomAnimal,
+                    initial: initialCount,
+                    change: subCount,
+                    target: targetRemainder,
+                    questionVoice: `车上原有 ${initialCount} 只${randomAnimal.name}，到站下去了 ${subCount} 只。可乐，车里还剩几只呢？`
+                };
+            }
+        }
+
+        function renderScene(problem, step = 'question') {
+            const seatsContainer = document.getElementById('train-seats');
+            seatsContainer.innerHTML = '';
+
+            const actionBadge = document.getElementById('action-badge');
+            const actionIcon = document.getElementById('action-icon');
+            const actionDesc = document.getElementById('action-desc');
+
+            if (problem.type === 'add') {
+                actionBadge.className = "mb-2 px-4 py-1.5 rounded-full text-base sm:text-lg font-black shadow-md flex items-center space-x-2 bg-emerald-500 text-white border-2 border-white";
+                actionIcon.textContent = "➕";
+                actionDesc.textContent = `小动物上车啦！(+${problem.change})`;
+            } else {
+                actionBadge.className = "mb-2 px-4 py-1.5 rounded-full text-base sm:text-lg font-black shadow-md flex items-center space-x-2 bg-amber-500 text-white border-2 border-white";
+                actionIcon.textContent = "➖";
+                actionDesc.textContent = `小动物下车啦！(-${problem.change})`;
+            }
+
+            // Always render 5 window slots
+            for (let i = 0; i < 5; i++) {
+                const windowBox = document.createElement('div');
+                windowBox.className = "w-12 h-16 sm:w-16 sm:h-20 bg-sky-100 rounded-xl border-3 border-slate-700 flex flex-col items-center justify-center relative overflow-hidden shadow-inner seat-slot";
+                windowBox.dataset.seatIndex = i;
+
+                let hasAnimal = false;
+                let isLeaving = false;
+                let isJoining = false;
+
+                if (problem.type === 'add') {
+                    // Initial animals + joined animals
+                    if (i < problem.initial) {
+                        hasAnimal = true;
+                    } else if (i < problem.target) {
+                        hasAnimal = true;
+                        isJoining = true;
+                    }
+                } else {
+                    // Subtraction: Initial animals, some leaving
+                    if (i < problem.target) {
+                        hasAnimal = true;
+                    } else if (i < problem.initial) {
+                        hasAnimal = true;
+                        isLeaving = true;
+                    }
+                }
+
+                if (hasAnimal) {
+                    const animalEl = document.createElement('div');
+                    animalEl.className = "text-2xl sm:text-4xl transition-all duration-300";
+                    animalEl.textContent = problem.animal.icon;
+
+                    if (isJoining) {
+                        animalEl.classList.add('animal-hop-in');
+                        // Add a small "+1" tag for clarity
+                        const tag = document.createElement('span');
+                        tag.className = "absolute top-1 text-[9px] font-black bg-emerald-500 text-white px-1 rounded-full";
+                        tag.textContent = "新上车";
+                        windowBox.appendChild(tag);
+                    } else if (isLeaving) {
+                        animalEl.classList.add('opacity-30', 'scale-75');
+                        const crossTag = document.createElement('span');
+                        crossTag.className = "absolute text-xs sm:text-sm font-black text-rose-600 bg-white/90 px-1 rounded-full border border-rose-400";
+                        crossTag.textContent = "已下车";
+                        windowBox.appendChild(crossTag);
+                    }
+
+                    windowBox.appendChild(animalEl);
+                } else {
+                    // Empty seat indicator (simple dotted circle)
+                    const emptySeat = document.createElement('div');
+                    emptySeat.className = "w-6 h-6 rounded-full border-2 border-dashed border-sky-300 flex items-center justify-center text-[10px] text-sky-400 font-bold";
+                    emptySeat.textContent = i + 1;
+                    windowBox.appendChild(emptySeat);
+                }
+
+                seatsContainer.appendChild(windowBox);
+            }
+        }
+
+        // Highlights the seated animals one by one, counting out loud
+        function countOutLoudForKele(callback) {
+            const seats = document.querySelectorAll('.seat-slot');
+            const targetCount = currentProblem.target;
+            let current = 0;
+
+            function highlightNext() {
+                if (current < targetCount) {
+                    const seat = seats[current];
+                    seat.classList.add('highlight-seat', 'bg-amber-100');
+                    playSfx('pop');
+
+                    current++;
+                    speak(`${current}`, 0.9, () => {
+                        setTimeout(() => {
+                            seat.classList.remove('highlight-seat', 'bg-amber-100');
+                            highlightNext();
+                        }, 200);
+                    });
+                } else {
+                    if (callback) callback();
+                }
+            }
+            highlightNext();
+        }
+
+        function nextRound() {
+            isInteractionLocked = false;
+            currentProblem = generateMathProblem();
+            renderScene(currentProblem);
+
+            // Announce problem with friendly voice
+            playSfx('whistle');
+            setTimeout(() => {
+                speak(currentProblem.questionVoice);
+            }, 600);
+        }
+
+        function handleAnswer(selectedNumber) {
+            if (isInteractionLocked || !currentProblem) return;
+            initSound();
+
+            if (selectedNumber === currentProblem.target) {
+                // Correct answer!
+                isInteractionLocked = true;
+                starCount++;
+                document.getElementById('star-count').textContent = starCount;
+
+                // Train celebration
+                playSfx('correct');
+                const train = document.getElementById('train-container');
+                train.classList.add('train-zoom');
+
+                // Burst colorful confetti
+                if (typeof confetti === 'function') {
+                    confetti({
+                        particleCount: 65,
+                        spread: 70,
+                        origin: { y: 0.6 }
+                    });
+                }
+
+                const praises = [
+                    `太棒啦！可乐答对啦，是 ${selectedNumber}！高铁路风笛鸣响，发车咯！`,
+                    `太聪明了可乐！正好是 ${selectedNumber} 位乘客，列车全速前进！`,
+                    `真厉害！可乐列车长数得真准，就是 ${selectedNumber}！开往下一站！`
+                ];
+                const praiseText = praises[Math.floor(Math.random() * praises.length)];
+
+                speak(praiseText, 0.95, () => {
+                    train.classList.remove('train-zoom');
+                    setTimeout(() => {
+                        nextRound();
+                    }, 1200);
+                });
+
+            } else {
+                // Wrong answer: gentle, reassuring guidance without punishment
+                isInteractionLocked = true;
+                playSfx('gentle-retry');
+
+                const gentleGuide = `没关系，可乐！我们一起来数一数车上的动物朋友吧：`;
+                speak(gentleGuide, 0.9, () => {
+                    // Visually count 1, 2, 3...
+                    countOutLoudForKele(() => {
+                        const remind = `可乐看，一共有 ${currentProblem.target} 只呢，再试着按一次好吗？`;
+                        speak(remind, 0.9, () => {
+                            isInteractionLocked = false;
+                        });
+                    });
+                });
+            }
+        }
+
+        // Replay audio question button
+        document.getElementById('btn-replay-audio').addEventListener('click', () => {
+            initSound();
+            if (currentProblem) {
+                speak(currentProblem.questionVoice);
+            }
+        });
+
+        // Initialize voice list and prepare initial greeting
+        window.addEventListener('DOMContentLoaded', () => {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.onvoiceschanged = () => {
+                    // pre-warm voices
+                    window.speechSynthesis.getVoices();
+                };
+            }
+
+            // Friendly touch to start on user first gesture
+            const startHandler = () => {
+                initSound();
+                document.body.removeEventListener('click', startHandler);
+                document.body.removeEventListener('touchstart', startHandler);
+                if (!currentProblem) {
+                    speak("可乐列车长你好！高铁马上出发，我们开始吧！", 0.9, () => {
+                        nextRound();
+                    });
+                }
+            };
+
+            document.body.addEventListener('click', startHandler, { once: true });
+            document.body.addEventListener('touchstart', startHandler, { once: true });
+        });
+    </script>
+</body>
+</html>
