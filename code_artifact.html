@@ -1,0 +1,904 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>《咯咯哒！憋不住啦！》趣味20以内数学大冒险</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/canvas-confetti/1.6.0/confetti.browser.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&family=Fredoka+One&display=swap" rel="stylesheet">
+    
+    <style>
+        * {
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'ZCOOL KuaiLe', cursive, 'Fredoka One', sans-serif;
+            background: linear-gradient(180deg, #7CD7FF 0%, #B6E9FF 40%, #85E35D 40%, #5BB331 100%);
+            min-height: 100vh;
+            margin: 0;
+            padding: 0;
+            touch-action: manipulation;
+            overflow-x: hidden;
+        }
+        /* Steady, pleasant breathing for hen - NO shaking, NO parent jitter */
+        @keyframes gentleBreathe {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.03, 0.98); }
+        }
+        .hen-breathe {
+            animation: gentleBreathe 2s ease-in-out infinite;
+            transform-origin: bottom center;
+        }
+        @keyframes happyPop {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        .anim-happy {
+            animation: happyPop 0.8s ease-in-out infinite;
+        }
+        /* 3D button effect without position wobble */
+        .btn-chubby {
+            box-shadow: 0 6px 0 rgba(0,0,0,0.18), 0 10px 15px rgba(0,0,0,0.12);
+            transition: transform 0.08s ease, box-shadow 0.08s ease;
+        }
+        .btn-chubby:active {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 rgba(0,0,0,0.18), 0 4px 6px rgba(0,0,0,0.12);
+        }
+        /* Large Ten-Frame Grid */
+        .ten-frame-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            grid-template-rows: repeat(2, 1fr);
+            gap: 8px;
+        }
+        @keyframes stampIn {
+            0% { transform: scale(0.3); opacity: 0; }
+            70% { transform: scale(1.1); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .anim-stamp {
+            animation: stampIn 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+    </style>
+</head>
+<body class="flex flex-col items-center justify-between min-h-screen p-2 md:p-4">
+
+    <!-- Top Status Bar -->
+    <header class="w-full max-w-xl flex items-center justify-between mb-2 z-20">
+        <div class="flex items-center gap-2">
+            <div class="bg-amber-100 border-4 border-amber-500 rounded-full px-4 py-1.5 shadow-md flex items-center gap-2">
+                <span class="text-2xl">🏆</span>
+                <span class="text-amber-950 font-black text-base md:text-lg">金蛋: <span id="score-display" class="text-2xl text-red-600 font-extrabold">0</span></span>
+            </div>
+            <!-- Streak Combo Badge -->
+            <div id="streak-badge" class="hidden bg-gradient-to-r from-red-500 to-orange-500 text-white font-extrabold px-3 py-1 rounded-full border-2 border-yellow-300 text-sm shadow">
+                🔥 连对 <span id="streak-count">0</span> 题!
+            </div>
+        </div>
+
+        <div class="flex items-center gap-2">
+            <!-- Audio Toggle -->
+            <button id="btn-sound" class="w-11 h-11 bg-yellow-300 hover:bg-yellow-400 border-3 border-yellow-600 rounded-full flex items-center justify-center text-xl shadow btn-chubby">
+                🔊
+            </button>
+            <!-- Chick Garden Collection Modal Trigger -->
+            <button id="btn-barn" class="bg-gradient-to-r from-orange-400 to-amber-500 text-white font-black px-4 py-1.5 border-3 border-amber-700 rounded-full shadow flex items-center gap-1.5 btn-chubby text-sm md:text-base">
+                <span>🐣</span>
+                <span>小鸡乐园</span>
+                <span id="chick-count-badge" class="bg-red-500 text-white text-xs px-2 py-0.5 rounded-full ml-1 font-bold">0</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Game Workspace (Completely Stable Layout) -->
+    <main class="w-full max-w-xl flex flex-col items-center gap-3 z-10 flex-grow">
+        
+        <!-- 1. Big Clear Math Equation Card -->
+        <div class="w-full bg-white border-4 border-yellow-500 rounded-3xl p-3 md:p-4 shadow-lg text-center relative">
+            <div class="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-yellow-400 border-2 border-yellow-600 px-4 py-0.5 rounded-full text-yellow-950 font-black text-xs md:text-sm shadow flex items-center gap-2">
+                <span id="mode-badge">20以内数学题</span>
+                <button id="btn-speak-question" class="bg-rose-500 hover:bg-rose-600 text-white text-xs px-2.5 py-0.5 rounded-full border border-rose-700 shadow flex items-center gap-1 active:scale-95 transition-all">
+                    <span>📢</span>
+                    <span>再读一遍</span>
+                </button>
+            </div>
+
+            <!-- Big Numbers -->
+            <div class="flex items-center justify-center gap-3 my-2 pt-1">
+                <span id="num-a" class="text-5xl md:text-6xl text-sky-600 font-black">7</span>
+                <span id="operator" class="text-4xl md:text-5xl text-amber-500 font-black">+</span>
+                <span id="num-b" class="text-5xl md:text-6xl text-emerald-600 font-black">6</span>
+                <span class="text-4xl md:text-5xl text-gray-500 font-black">=</span>
+                <div id="target-box" class="w-16 h-14 md:w-20 md:h-16 bg-amber-50 border-4 border-dashed border-amber-400 rounded-2xl flex items-center justify-center text-4xl md:text-5xl font-black text-purple-600 shadow-inner">
+                    ?
+                </div>
+            </div>
+
+            <p id="hint-text" class="text-amber-900 text-xs md:text-sm font-bold bg-amber-100 rounded-xl py-1 px-3 inline-block">
+                母鸡肚子里憋着这些蛋，快帮它算出来！
+            </p>
+        </div>
+
+        <!-- 2. Hen Row: Mother Hen on Left, Dialogue Bubble on Right (No overlapping, completely still) -->
+        <div class="w-full bg-white/60 border-2 border-amber-400/80 rounded-2xl p-2 md:p-3 shadow flex items-center justify-between gap-3 relative">
+            <!-- Hen SVG Character (Breathing smoothly without shaking) -->
+            <div class="w-28 h-28 md:w-32 md:h-32 flex-shrink-0 flex items-center justify-center relative">
+                <div id="hen-body-wrapper" class="w-full h-full hen-breathe">
+                    <svg viewBox="0 0 200 200" class="w-full h-full overflow-visible">
+                        <!-- Silly drop point -->
+                        <g id="egg-exit" transform="translate(100, 160)"></g>
+                        <!-- Belly -->
+                        <ellipse id="hen-belly" cx="100" cy="120" rx="60" ry="50" fill="#FFF8DC" stroke="#D35400" stroke-width="4"/>
+                        <!-- Blushing Cheeks -->
+                        <ellipse id="blush-l" cx="62" cy="115" rx="14" ry="10" fill="#FF4757" opacity="0.8"/>
+                        <ellipse id="blush-r" cx="138" cy="115" rx="14" ry="10" fill="#FF4757" opacity="0.8"/>
+                        <!-- Wings -->
+                        <path id="wing-left" d="M45 105 C25 110 20 140 45 145 C60 150 65 125 45 105 Z" fill="#FAD02C" stroke="#D35400" stroke-width="3"/>
+                        <path id="wing-right" d="M155 105 C175 110 180 140 155 145 C140 150 135 125 155 105 Z" fill="#FAD02C" stroke="#D35400" stroke-width="3"/>
+                        <!-- Head -->
+                        <circle cx="100" cy="72" r="32" fill="#FFF8DC" stroke="#D35400" stroke-width="4"/>
+                        <!-- Comb -->
+                        <path d="M85 45 C75 30 90 20 98 35 C105 18 120 25 115 42 Z" fill="#E74C3C" stroke="#922B21" stroke-width="3"/>
+                        <!-- Wattle -->
+                        <path d="M96 92 C96 102 104 102 104 92 Z" fill="#E74C3C"/>
+                        <!-- Beak -->
+                        <polygon points="92,76 108,76 100,90" fill="#F39C12" stroke="#B9770E" stroke-width="2"/>
+                        <!-- Eyes -->
+                        <ellipse cx="88" cy="68" rx="9" ry="11" fill="white" stroke="#333" stroke-width="2"/>
+                        <circle id="pupil-left" cx="93" cy="68" r="4.5" fill="#111"/>
+                        <circle cx="94" cy="66" r="1.5" fill="white"/>
+                        <ellipse cx="112" cy="68" rx="9" ry="11" fill="white" stroke="#333" stroke-width="2"/>
+                        <circle id="pupil-right" cx="107" cy="68" r="4.5" fill="#111"/>
+                        <circle cx="108" cy="66" r="1.5" fill="white"/>
+                    </svg>
+                </div>
+            </div>
+
+            <!-- Dialogue box: cleanly on the right side of the hen -->
+            <div class="flex-grow bg-amber-50 border-3 border-amber-500 rounded-2xl p-3 shadow-sm flex flex-col justify-center">
+                <div class="flex items-center gap-1.5 mb-1">
+                    <span class="text-base">🐔</span>
+                    <span class="font-black text-amber-950 text-sm">咕咕母鸡说:</span>
+                </div>
+                <p id="hen-speech" class="text-amber-900 font-black text-base md:text-lg leading-tight">
+                    好憋啊！快选出正确答案救救我！😣
+                </p>
+            </div>
+
+            <!-- Direct Praise Stamp Overlay on Success -->
+            <div id="praise-stamp-box" class="absolute inset-0 flex items-center justify-center z-30 pointer-events-none hidden bg-black/20 rounded-2xl">
+                <div class="bg-gradient-to-r from-emerald-500 to-green-600 border-4 border-white text-white px-6 py-2.5 rounded-2xl font-black text-2xl shadow-xl anim-stamp flex items-center gap-2">
+                    <span>🌟</span>
+                    <span id="praise-stamp-text">答对啦！你真棒！</span>
+                    <span>🎉</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. Big Ten-Frame Trays (Retained enlarged size, easy to see and touch) -->
+        <div class="w-full bg-amber-50 border-4 border-amber-600 rounded-3xl p-3 shadow-lg">
+            <div class="flex items-center justify-between mb-2 px-1">
+                <div class="text-sm md:text-base font-black text-amber-950 flex items-center gap-1">
+                    <span>🧺</span>
+                    <span>20格蛋盒 (点格子数一数)：</span>
+                </div>
+                <div class="text-xs md:text-sm text-rose-700 font-extrabold bg-amber-200 px-3 py-0.5 rounded-full" id="tray-count-summary">
+                    手指数数: 0
+                </div>
+            </div>
+
+            <!-- Two 10-frames stacked -->
+            <div class="flex flex-col gap-2.5">
+                <!-- Tray 1: 1 to 10 -->
+                <div class="bg-amber-200/90 border-2 border-amber-400 rounded-2xl p-2">
+                    <div class="flex justify-between items-center px-1 mb-1 text-xs font-black text-amber-900">
+                        <span>【第 1 盒 · 凑满10个】</span>
+                        <span class="text-amber-700 font-bold">1 ~ 10</span>
+                    </div>
+                    <div id="tray-1" class="ten-frame-grid min-h-[90px] md:min-h-[105px]">
+                        <!-- slots injected by JS -->
+                    </div>
+                </div>
+
+                <!-- Tray 2: 11 to 20 -->
+                <div class="bg-emerald-100 border-2 border-emerald-400 rounded-2xl p-2">
+                    <div class="flex justify-between items-center px-1 mb-1 text-xs font-black text-emerald-900">
+                        <span>【第 2 盒 · 多出来的零头】</span>
+                        <span class="text-emerald-700 font-bold">11 ~ 20</span>
+                    </div>
+                    <div id="tray-2" class="ten-frame-grid min-h-[90px] md:min-h-[105px]">
+                        <!-- slots injected by JS -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 4. Stable, Large Answer Choice Buttons (Never shake, steady position) -->
+        <div class="w-full">
+            <div class="text-center text-xs md:text-sm font-black text-yellow-950 mb-1">
+                👇 点击下方正确的数字拯救母鸡：
+            </div>
+            <div id="answer-choices" class="grid grid-cols-4 gap-3 w-full">
+                <!-- 4 rock-steady, colorful buttons injected by JS -->
+            </div>
+        </div>
+
+        <!-- 5. Auxiliary Bar -->
+        <div class="w-full flex justify-between items-center px-1 pt-1 pb-2">
+            <button id="btn-count-hint" class="bg-sky-500 hover:bg-sky-600 text-white font-black text-xs md:text-sm px-4 py-2 rounded-full border-2 border-sky-700 shadow btn-chubby flex items-center gap-1.5">
+                <span>💡</span>
+                <span>语音教我数一数</span>
+            </button>
+            <button id="btn-skip" class="bg-amber-300 hover:bg-amber-400 text-amber-950 font-black text-xs md:text-sm px-4 py-2 rounded-full border-2 border-amber-600 shadow btn-chubby flex items-center gap-1.5">
+                <span>🔄</span>
+                <span>换一题</span>
+            </button>
+        </div>
+    </main>
+
+    <!-- Hatching Celebration Modal (Tap egg to crack!) -->
+    <div id="hatch-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-gradient-to-b from-yellow-200 to-amber-200 border-8 border-yellow-500 rounded-3xl p-6 max-w-sm w-full text-center shadow-2xl relative">
+            <h2 class="text-3xl font-extrabold text-amber-900 mb-1">🎉 扑哧！蛋生出来啦！</h2>
+            <p id="hatch-hint" class="text-rose-600 font-bold text-base mb-4">快用手指敲敲蛋壳！(连点3下)</p>
+
+            <!-- Egg to Tap -->
+            <div class="relative w-40 h-48 mx-auto my-3 flex items-center justify-center cursor-pointer select-none" id="tap-egg-zone">
+                <div id="egg-graphics" class="w-32 h-40 bg-gradient-to-tr from-amber-300 via-yellow-100 to-amber-200 rounded-[50%_50%_50%_50%/60%_60%_40%_40%] border-4 border-amber-500 shadow-xl flex items-center justify-center relative transition-transform duration-100">
+                    <span id="egg-crack-mark" class="text-4xl hidden">⚡</span>
+                    <span id="egg-number-label" class="absolute bottom-4 font-black text-amber-800/60 text-xl">12</span>
+                </div>
+                <!-- Baby Chick Revealed -->
+                <div id="chick-revealed" class="hidden flex-col items-center justify-center">
+                    <div id="chick-emoji" class="text-7xl">🐣</div>
+                    <div id="chick-title" class="text-xl font-black text-amber-950 mt-2 bg-yellow-300/80 px-3 py-1 rounded-full border border-yellow-600">
+                        小鸡登场
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-sm text-amber-800 font-bold mb-4" id="hatch-chick-desc">
+                算得太准啦！母鸡浑身舒坦！
+            </div>
+
+            <button id="btn-continue-game" class="hidden w-full bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold text-2xl py-3 rounded-2xl border-4 border-emerald-700 shadow-lg btn-chubby">
+                继续下一关！👉
+            </button>
+        </div>
+    </div>
+
+    <!-- Chick Garden Modal -->
+    <div id="barn-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-gradient-to-b from-sky-100 to-yellow-100 border-8 border-amber-500 rounded-3xl p-5 max-w-md w-full shadow-2xl relative max-h-[85vh] flex flex-col">
+            <div class="flex justify-between items-center mb-3">
+                <h2 class="text-2xl font-black text-amber-900 flex items-center gap-2">
+                    <span>🏡</span>
+                    <span>我的神奇小鸡乐园</span>
+                </h2>
+                <button id="btn-close-barn" class="w-10 h-10 bg-rose-500 text-white font-black text-xl rounded-full border-2 border-rose-700 shadow">
+                    ✕
+                </button>
+            </div>
+            
+            <p class="text-xs md:text-sm text-amber-800 mb-3 font-bold">
+                每做对一题，就能从蛋里孵出捣蛋小鸡！看你收集了多少只：
+            </p>
+
+            <!-- Chicks Grid -->
+            <div id="chicks-grid" class="flex-grow overflow-y-auto grid grid-cols-3 gap-3 p-2 bg-white/70 rounded-2xl border-2 border-amber-300">
+                <!-- Dynamically filled -->
+            </div>
+
+            <div class="mt-4 pt-2 border-t border-amber-300 flex justify-between items-center">
+                <span class="text-sm font-bold text-amber-900">收集进度: <span id="barn-progress-text" class="text-rose-600 font-black">0 / 12</span></span>
+                <button id="btn-make-all-dance" class="bg-amber-400 hover:bg-amber-500 text-amber-950 font-black px-4 py-2 rounded-xl text-sm border-2 border-amber-600 btn-chubby">
+                    🎵 全员魔性齐舞
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Toast -->
+    <div id="funny-toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-yellow-400 border-4 border-yellow-700 text-yellow-950 px-5 py-2 rounded-full font-black text-base shadow-2xl z-40 transform translate-y-36 transition-transform duration-300 pointer-events-none flex items-center gap-2">
+        <span id="toast-icon">💨</span>
+        <span id="toast-msg">哎呀，生错啦！</span>
+    </div>
+
+    <script>
+        const state = {
+            soundEnabled: true,
+            score: 0,
+            streak: 0,
+            currNumA: 7,
+            currNumB: 6,
+            operator: '+',
+            correctAnswer: 13,
+            eggCrackTaps: 0,
+            collectedChicks: []
+        };
+
+        const PRAISE_VOICES = [
+            "答对啦！你真棒！太聪明了！",
+            "哇塞！算得太快啦！宝贝你真棒！",
+            "太棒啦！母鸡的肚子终于舒服啦！奖励你一颗大金蛋！",
+            "真厉害！完全正确！你真棒！",
+            "大二班的数学小达人，答得太好啦！"
+        ];
+
+        const CHICK_CATALOG = [
+            { id: 1, name: "爆炸头迪斯科鸡", emoji: "🕺🐣", desc: "最爱跳80年代复古晃头舞" },
+            { id: 2, name: "戴墨镜的酷盖鸡", emoji: "😎🐥", desc: "冷酷无比，绝不回头看爆炸" },
+            { id: 3, name: "披风超人小胖鸡", emoji: "🦸🐥", desc: "肚子太大飞不起来，只能倒着滑行" },
+            { id: 4, name: "潜水吐泡泡鸡", emoji: "🤿🐤", desc: "喜欢在水盆里吹咕嘟咕嘟泡泡" },
+            { id: 5, name: "贪吃汉堡鸡", emoji: "🍔🐥", desc: "比汉堡还要圆滚滚的小胖子" },
+            { id: 6, name: "魔法彩虹独角鸡", emoji: "🦄🐣", desc: "头上长犄角，走过的地方有彩虹" },
+            { id: 7, name: "宇航员太空鸡", emoji: "🧑‍🚀🐥", desc: "打算飞去月球找玉兔借胡萝卜" },
+            { id: 8, name: "海盗独眼鸡船长", emoji: "🏴‍☠️🐤", desc: "口头禅是：咯咯哒！交出小米粒！" },
+            { id: 9, name: "睡神抱抱鸡", emoji: "😴🐣", desc: "站着都能打呼噜的小树懒鸡" },
+            { id: 10, name: "冠军金牌鸡", emoji: "🥇🐥", desc: "连续三年下蛋锦标赛冠军" },
+            { id: 11, name: "头顶蛋壳高傲鸡", emoji: "🐣👑", desc: "把蛋壳当成皇冠戴的小自恋" },
+            { id: 12, name: "摇滚吉他手小鸡", emoji: "🎸🐤", desc: "天天用鸡爪弹贝斯，嗨翻鸡舍" }
+        ];
+
+        const WRONG_ITEMS = [
+            { emoji: "🧦", name: "臭袜子！", talk: "矮油！生出了一只三天没洗的臭袜子！！" },
+            { emoji: "🦆", name: "小黄鸭玩具！", talk: "嘎嘎嘎？怎么混进去一只假鸭子！" },
+            { emoji: "🍆", name: "大紫茄子！", talk: "哎呀呀！肚子疼，怎么挤出一根大茄子！" },
+            { emoji: "💨", name: "七彩连环屁！", talk: "噗！母鸡被后坐力弹飞啦！" },
+            { emoji: "👟", name: "老爹的拖鞋！", talk: "噗哧！母鸡把谁的拖鞋给吞下去了？！" },
+            { emoji: "🍌", name: "大香蕉皮！", talk: "嗖！生出一根香蕉皮，自己踩到了！" }
+        ];
+
+        let synth, noiseSynth, membraneSynth;
+
+        function initAudio() {
+            try {
+                if (window.Tone && !synth) {
+                    Tone.start();
+                    synth = new Tone.PolySynth(Tone.Synth).toDestination();
+                    synth.volume.value = -6;
+
+                    membraneSynth = new Tone.MembraneSynth().toDestination();
+                    membraneSynth.volume.value = -4;
+
+                    noiseSynth = new Tone.NoiseSynth({
+                        noise: { type: "pink" },
+                        envelope: { attack: 0.005, decay: 0.1, sustain: 0 }
+                    }).toDestination();
+                    noiseSynth.volume.value = -8;
+                }
+            } catch (e) {
+                console.log("Audio waiting for trigger", e);
+            }
+        }
+
+        function speakVoice(text, options = {}) {
+            if (!state.soundEnabled) return;
+            if (!('speechSynthesis' in window)) return;
+
+            try {
+                window.speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'zh-CN';
+                utterance.rate = options.rate || 1.05;
+                utterance.pitch = options.pitch || 1.25;
+
+                const voices = window.speechSynthesis.getVoices();
+                const zhVoice = voices.find(v => v.lang.includes('zh') || v.lang.includes('cmn'));
+                if (zhVoice) {
+                    utterance.voice = zhVoice;
+                }
+                window.speechSynthesis.speak(utterance);
+            } catch (err) {
+                console.warn("Speech error:", err);
+            }
+        }
+
+        function speakCurrentProblem() {
+            if (!state.soundEnabled) return;
+            let storyText = "";
+            if (state.operator === '+') {
+                storyText = `${state.currNumA} 加 ${state.currNumB} 等于几？吃了 ${state.currNumA} 粒黄玉米，又吃了 ${state.currNumB} 粒红玉米，一共生几个蛋呢？`;
+            } else {
+                storyText = `${state.currNumA} 减 ${state.currNumB} 等于几？本来有 ${state.currNumA} 个蛋，被狐狸拿走 ${state.currNumB} 个，还剩几个呢？`;
+            }
+            speakVoice(storyText);
+        }
+
+        function playSfx(type) {
+            if (!state.soundEnabled) return;
+            initAudio();
+            const now = Tone.now();
+
+            switch (type) {
+                case 'pop':
+                    membraneSynth.triggerAttackRelease("C3", "8n", now);
+                    synth.triggerAttackRelease(["E5", "G5"], "16n", now + 0.05);
+                    break;
+                case 'cluck':
+                    synth.triggerAttackRelease(["F4", "A4"], "16n", now);
+                    synth.triggerAttackRelease(["F4", "A4"], "16n", now + 0.12);
+                    synth.triggerAttackRelease(["C5"], "8n", now + 0.25);
+                    break;
+                case 'fart':
+                    membraneSynth.triggerAttackRelease("G1", "4n", now, 1);
+                    synth.triggerAttackRelease(["Db2", "D2"], "8n", now + 0.05);
+                    break;
+                case 'crack':
+                    noiseSynth.triggerAttackRelease("16n", now);
+                    synth.triggerAttackRelease(["B5"], "32n", now);
+                    break;
+                case 'fanfare':
+                    synth.triggerAttackRelease(["C4", "E4", "G4"], "8n", now);
+                    synth.triggerAttackRelease(["E4", "G4", "C5"], "8n", now + 0.15);
+                    synth.triggerAttackRelease(["G4", "B4", "D5"], "8n", now + 0.3);
+                    synth.triggerAttackRelease(["C5", "E5", "G5", "C6"], "4n", now + 0.45);
+                    break;
+                case 'tap':
+                    synth.triggerAttackRelease("C5", "32n", now);
+                    break;
+            }
+        }
+
+        function generateMathProblem() {
+            const isAddition = Math.random() < 0.65;
+            let a, b, answer, op;
+
+            if (isAddition) {
+                op = '+';
+                if (Math.random() < 0.6) {
+                    a = Math.floor(Math.random() * 5) + 5; // 5 to 9
+                    b = Math.floor(Math.random() * (20 - a - 1)) + 2;
+                    if (a + b <= 10) b = 11 - a + Math.floor(Math.random() * 4);
+                } else {
+                    a = Math.floor(Math.random() * 11) + 2;
+                    b = Math.floor(Math.random() * (20 - a + 1));
+                }
+                answer = a + b;
+            } else {
+                op = '-';
+                if (Math.random() < 0.7) {
+                    a = Math.floor(Math.random() * 9) + 11; // 11 to 19
+                    b = Math.floor(Math.random() * 8) + 2;
+                    if (b >= a) b = a - 3;
+                } else {
+                    a = Math.floor(Math.random() * 10) + 5;
+                    b = Math.floor(Math.random() * a);
+                }
+                answer = a - b;
+            }
+
+            answer = Math.max(1, Math.min(20, answer));
+
+            state.currNumA = a;
+            state.currNumB = b;
+            state.operator = op;
+            state.correctAnswer = answer;
+
+            renderProblemUI();
+            updateTenFrames();
+            renderChoices();
+
+            // Default auto narration
+            setTimeout(() => {
+                speakCurrentProblem();
+            }, 300);
+        }
+
+        function renderProblemUI() {
+            document.getElementById('num-a').textContent = state.currNumA;
+            document.getElementById('operator').textContent = state.operator;
+            document.getElementById('num-b').textContent = state.currNumB;
+            document.getElementById('target-box').textContent = '?';
+            document.getElementById('target-box').className = "w-16 h-14 md:w-20 md:h-16 bg-amber-50 border-4 border-dashed border-amber-400 rounded-2xl flex items-center justify-center text-4xl md:text-5xl font-black text-purple-600 shadow-inner";
+
+            const modeBadge = document.getElementById('mode-badge');
+            const hintText = document.getElementById('hint-text');
+
+            if (state.operator === '+') {
+                modeBadge.textContent = "加法吃饲料生蛋题";
+                modeBadge.className = "bg-amber-400 border-2 border-amber-600 px-3 py-0.5 rounded-full text-amber-950 font-bold text-xs md:text-sm shadow";
+                hintText.innerHTML = `吃了 <span class="text-sky-600 font-black">${state.currNumA}</span> 粒黄玉米，又吃了 <span class="text-emerald-600 font-black">${state.currNumB}</span> 粒红玉米，一共生几个？`;
+            } else {
+                modeBadge.textContent = "减法小狐狸偷蛋题";
+                modeBadge.className = "bg-rose-400 border-2 border-rose-600 px-3 py-0.5 rounded-full text-rose-950 font-bold text-xs md:text-sm shadow";
+                hintText.innerHTML = `鸡窝本来有 <span class="text-sky-600 font-black">${state.currNumA}</span> 个蛋，被调皮狐狸偷走了 <span class="text-emerald-600 font-black">${state.currNumB}</span> 个，还剩几个？`;
+            }
+
+            const dialogues = [
+                "好憋啊！快选出正确答案救救我！😣",
+                "咕咕哒！我真的憋不住啦！😵",
+                "快帮我算算肚子里有几个蛋！🎈",
+                "数一数下方的格子，选出答案吧！🧺"
+            ];
+            document.getElementById('hen-speech').textContent = dialogues[Math.floor(Math.random() * dialogues.length)];
+        }
+
+        function updateTenFrames(highlightCount = 0) {
+            const tray1 = document.getElementById('tray-1');
+            const tray2 = document.getElementById('tray-2');
+            tray1.innerHTML = '';
+            tray2.innerHTML = '';
+
+            const filledTotal = highlightCount;
+
+            for (let i = 1; i <= 20; i++) {
+                const targetTray = (i <= 10) ? tray1 : tray2;
+                const slot = document.createElement('div');
+                slot.className = "w-full h-10 md:h-12 bg-white rounded-xl border-2 border-amber-300 flex items-center justify-center relative cursor-pointer active:scale-95 hover:bg-yellow-100 transition-all shadow-sm";
+                
+                if (i <= filledTotal) {
+                    let eggBg = "from-amber-300 via-yellow-300 to-amber-500 border-amber-600";
+                    let isFirstGroup = (state.operator === '+') ? (i <= state.currNumA) : true;
+
+                    if (!isFirstGroup && state.operator === '+') {
+                        eggBg = "from-emerald-300 via-green-300 to-emerald-500 border-emerald-600";
+                    }
+
+                    slot.innerHTML = `
+                        <div class="w-7 h-9 md:w-9 md:h-11 bg-gradient-to-t ${eggBg} rounded-[50%_50%_50%_50%/60%_60%_40%_40%] border-2 shadow-sm flex items-center justify-center text-sm md:text-base font-black text-amber-950">
+                            ${i}
+                        </div>
+                    `;
+                } else {
+                    slot.innerHTML = `<span class="text-sm md:text-base font-black text-amber-300/80">${i}</span>`;
+                }
+
+                slot.addEventListener('click', () => {
+                    playSfx('tap');
+                    updateTenFrames(i);
+                    speakVoice(`${i}`);
+                    document.getElementById('tray-count-summary').innerHTML = `手指数到: <span class="text-base text-rose-600 font-black">${i}</span>`;
+                });
+
+                targetTray.appendChild(slot);
+            }
+
+            document.getElementById('tray-count-summary').innerHTML = filledTotal > 0 ? 
+                `已点亮蛋蛋: <span class="text-base text-rose-600 font-black">${filledTotal} 个</span>` : 
+                `手指点格子数一数 👆`;
+        }
+
+        function renderChoices() {
+            const container = document.getElementById('answer-choices');
+            container.innerHTML = '';
+
+            const correct = state.correctAnswer;
+            const choices = new Set([correct]);
+
+            const distractors = [
+                correct + 1,
+                correct - 1,
+                correct + 2,
+                correct - 2,
+                correct + 10,
+                correct - 10
+            ].filter(n => n >= 1 && n <= 20 && n !== correct);
+
+            distractors.sort(() => Math.random() - 0.5);
+            for (let d of distractors) {
+                choices.add(d);
+                if (choices.size >= 4) break;
+            }
+
+            while (choices.size < 4) {
+                let r = Math.floor(Math.random() * 20) + 1;
+                choices.add(r);
+            }
+
+            const choicesArray = Array.from(choices).sort(() => Math.random() - 0.5);
+            const buttonColors = [
+                { bg: 'from-amber-400 to-orange-500', border: 'border-orange-600', text: 'text-white' },
+                { bg: 'from-sky-400 to-blue-500', border: 'border-blue-600', text: 'text-white' },
+                { bg: 'from-emerald-400 to-green-500', border: 'border-green-600', text: 'text-white' },
+                { bg: 'from-pink-400 to-rose-500', border: 'border-rose-600', text: 'text-white' }
+            ];
+
+            // Render completely stable buttons (No jitter, no shaking)
+            choicesArray.forEach((num, index) => {
+                const col = buttonColors[index % buttonColors.length];
+                const btn = document.createElement('button');
+                btn.className = `bg-gradient-to-b ${col.bg} ${col.border} ${col.text} border-4 rounded-2xl py-3 text-3xl md:text-4xl font-black shadow-lg btn-chubby flex items-center justify-center transition-transform active:scale-95`;
+                btn.innerHTML = `<span>${num}</span>`;
+
+                btn.addEventListener('click', () => handleAnswerSelected(num, btn));
+                container.appendChild(btn);
+            });
+        }
+
+        function handleAnswerSelected(selectedNum, btnElement) {
+            initAudio();
+
+            if (selectedNum === state.correctAnswer) {
+                handleSuccess(selectedNum, btnElement);
+            } else {
+                handleWrongAnswer(wrongNum = selectedNum, btnElement);
+            }
+        }
+
+        function handleSuccess(selectedNum, btnElement) {
+            playSfx('fanfare');
+            playSfx('pop');
+            playSfx('cluck');
+
+            state.score++;
+            state.streak++;
+            document.getElementById('score-display').textContent = state.score;
+
+            const streakBadge = document.getElementById('streak-badge');
+            if (state.streak >= 2) {
+                document.getElementById('streak-count').textContent = state.streak;
+                streakBadge.classList.remove('hidden');
+            }
+
+            // Target box pop
+            const targetBox = document.getElementById('target-box');
+            targetBox.textContent = selectedNum;
+            targetBox.className = "w-16 h-14 md:w-20 md:h-16 bg-emerald-400 border-4 border-emerald-600 rounded-2xl flex items-center justify-center text-4xl md:text-5xl font-black text-white shadow-xl";
+
+            // Visual feedback on Ten-Frame
+            updateTenFrames(state.correctAnswer);
+
+            // Confetti
+            try {
+                confetti({
+                    particleCount: 70,
+                    spread: 80,
+                    origin: { y: 0.6 },
+                    colors: ['#FFD700', '#FF4500', '#32CD32', '#00BFFF', '#FF1493']
+                });
+            } catch (e) {}
+
+            // Praise banner & Speech
+            const stampBox = document.getElementById('praise-stamp-box');
+            const stampText = document.getElementById('praise-stamp-text');
+            stampText.textContent = state.streak >= 3 ? `🔥 连对 ${state.streak} 题！你真棒！` : "答对啦！你真棒！🎉";
+            stampBox.classList.remove('hidden');
+
+            document.getElementById('hen-speech').textContent = "咯咯哒！太舒坦啦！你真棒！💖";
+
+            const praiseText = PRAISE_VOICES[Math.floor(Math.random() * PRAISE_VOICES.length)];
+            speakVoice(praiseText, { pitch: 1.3, rate: 1.0 });
+
+            setTimeout(() => {
+                stampBox.classList.add('hidden');
+                showHatchEggModal();
+            }, 1600);
+        }
+
+        function handleWrongAnswer(wrongNum, btnElement) {
+            playSfx('fart');
+            state.streak = 0;
+            document.getElementById('streak-badge').classList.add('hidden');
+
+            const item = WRONG_ITEMS[Math.floor(Math.random() * WRONG_ITEMS.length)];
+
+            // Gentle visual tint only, NO shake
+            btnElement.classList.add('opacity-70');
+            setTimeout(() => {
+                btnElement.classList.remove('opacity-70');
+            }, 400);
+
+            spawnSillyItem(item.emoji);
+            showToast(item.emoji, item.talk);
+            speakVoice(`噗哧！不是${wrongNum}！母鸡生出了一只${item.name}！再数数看！`);
+
+            document.getElementById('hen-speech').textContent = "哎呀！不是这个数！生歪啦！😱";
+            updateTenFrames(wrongNum);
+            document.getElementById('tray-count-summary').innerHTML = `刚才按了 ${wrongNum}，再仔细数一数哦！`;
+        }
+
+        function spawnSillyItem(emoji) {
+            const exit = document.getElementById('egg-exit');
+            const itemEl = document.createElement('div');
+            itemEl.className = "absolute text-4xl pointer-events-none transition-all duration-600 ease-out z-30";
+            itemEl.textContent = emoji;
+            itemEl.style.transform = "translate(0, 0) scale(0.5)";
+            exit.appendChild(itemEl);
+
+            requestAnimationFrame(() => {
+                itemEl.style.transform = "translate(30px, 40px) scale(1.2)";
+                itemEl.style.opacity = "1";
+            });
+
+            setTimeout(() => {
+                itemEl.style.opacity = "0";
+                setTimeout(() => itemEl.remove(), 300);
+            }, 900);
+        }
+
+        function showToast(icon, msg) {
+            const toast = document.getElementById('funny-toast');
+            document.getElementById('toast-icon').textContent = icon;
+            document.getElementById('toast-msg').textContent = msg;
+            toast.classList.remove('translate-y-36');
+
+            setTimeout(() => {
+                toast.classList.add('translate-y-36');
+            }, 2200);
+        }
+
+        function showHatchEggModal() {
+            state.eggCrackTaps = 0;
+            const modal = document.getElementById('hatch-modal');
+            const eggGraphics = document.getElementById('egg-graphics');
+            const chickRevealed = document.getElementById('chick-revealed');
+            const btnContinue = document.getElementById('btn-continue-game');
+            const crackMark = document.getElementById('egg-crack-mark');
+            const numberLabel = document.getElementById('egg-number-label');
+            const hatchHint = document.getElementById('hatch-hint');
+
+            numberLabel.textContent = state.correctAnswer;
+            eggGraphics.classList.remove('hidden');
+            eggGraphics.style.transform = 'scale(1)';
+            chickRevealed.classList.add('hidden');
+            crackMark.classList.add('hidden');
+            crackMark.textContent = "⚡";
+            btnContinue.classList.add('hidden');
+            hatchHint.textContent = "快用手指敲敲蛋壳！(连点3下)";
+            hatchHint.className = "text-rose-600 font-bold text-base mb-4";
+
+            modal.classList.remove('hidden');
+        }
+
+        document.getElementById('tap-egg-zone').addEventListener('click', () => {
+            if (state.eggCrackTaps >= 3) return;
+
+            state.eggCrackTaps++;
+            playSfx('crack');
+
+            const egg = document.getElementById('egg-graphics');
+            const crackMark = document.getElementById('egg-crack-mark');
+            const hatchHint = document.getElementById('hatch-hint');
+
+            egg.style.transform = 'scale(1.06)';
+            setTimeout(() => { egg.style.transform = 'scale(1)'; }, 100);
+
+            crackMark.classList.remove('hidden');
+            if (state.eggCrackTaps === 1) {
+                crackMark.textContent = "⚡";
+                hatchHint.textContent = "蛋壳裂开一条缝啦！再敲两下！";
+                speakVoice("敲一下啦，再敲两下！");
+            } else if (state.eggCrackTaps === 2) {
+                crackMark.textContent = "💥⚡";
+                hatchHint.textContent = "看到鸡毛啦！马上出来啦！";
+                speakVoice("快了快了，再敲一下！");
+            } else if (state.eggCrackTaps === 3) {
+                playSfx('pop');
+                playSfx('cluck');
+                egg.classList.add('hidden');
+
+                const chick = CHICK_CATALOG[Math.floor(Math.random() * CHICK_CATALOG.length)];
+                if (!state.collectedChicks.some(c => c.id === chick.id)) {
+                    state.collectedChicks.push(chick);
+                    updateBarnUI();
+                }
+
+                const revealed = document.getElementById('chick-revealed');
+                revealed.classList.remove('hidden');
+                document.getElementById('chick-emoji').textContent = chick.emoji;
+                document.getElementById('chick-title').textContent = chick.name;
+                document.getElementById('hatch-chick-desc').textContent = chick.desc;
+                hatchHint.textContent = "✨ 哇！蹦出一只新的捣蛋小鸡！✨";
+                hatchHint.className = "text-emerald-700 font-black text-lg mb-4";
+
+                speakVoice(`哇！蹦出来一只${chick.name}！${chick.desc}`);
+                document.getElementById('btn-continue-game').classList.remove('hidden');
+
+                try {
+                    confetti({ particleCount: 60, spread: 80, origin: { y: 0.6 } });
+                } catch(e){}
+            }
+        });
+
+        document.getElementById('btn-continue-game').addEventListener('click', () => {
+            document.getElementById('hatch-modal').classList.add('hidden');
+            generateMathProblem();
+        });
+
+        function updateBarnUI() {
+            document.getElementById('chick-count-badge').textContent = state.collectedChicks.length;
+            document.getElementById('barn-progress-text').textContent = `${state.collectedChicks.length} / ${CHICK_CATALOG.length}`;
+
+            const grid = document.getElementById('chicks-grid');
+            grid.innerHTML = '';
+
+            CHICK_CATALOG.forEach(catalogItem => {
+                const unlocked = state.collectedChicks.some(c => c.id === catalogItem.id);
+                const card = document.createElement('div');
+                card.className = `p-2 rounded-xl border-2 flex flex-col items-center justify-center text-center transition-all ${
+                    unlocked ? 'bg-amber-100 border-amber-400 shadow' : 'bg-gray-100 border-gray-300 opacity-50'
+                }`;
+
+                card.innerHTML = `
+                    <div class="text-3xl md:text-4xl my-1">
+                        ${unlocked ? catalogItem.emoji : '🥚'}
+                    </div>
+                    <div class="text-[11px] font-bold text-amber-950 truncate w-full">
+                        ${unlocked ? catalogItem.name : '神秘未孵化'}
+                    </div>
+                `;
+
+                if (unlocked) {
+                    card.addEventListener('click', () => {
+                        playSfx('cluck');
+                        showToast(catalogItem.emoji, catalogItem.desc);
+                    });
+                }
+                grid.appendChild(card);
+            });
+        }
+
+        document.getElementById('btn-barn').addEventListener('click', () => {
+            playSfx('cluck');
+            updateBarnUI();
+            document.getElementById('barn-modal').classList.remove('hidden');
+        });
+        document.getElementById('btn-close-barn').addEventListener('click', () => {
+            playSfx('tap');
+            document.getElementById('barn-modal').classList.add('hidden');
+        });
+
+        document.getElementById('btn-make-all-dance').addEventListener('click', () => {
+            playSfx('fanfare');
+            speakVoice("咯咯哒！小鸡们开始跳舞啦！");
+            showToast("💃🕺", "小鸡们开启了欢乐舞会！");
+        });
+
+        document.getElementById('btn-sound').addEventListener('click', () => {
+            state.soundEnabled = !state.soundEnabled;
+            document.getElementById('btn-sound').textContent = state.soundEnabled ? '🔊' : '🔇';
+            if (state.soundEnabled) {
+                playSfx('cluck');
+                speakVoice("声音开启啦！");
+            } else {
+                if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+            }
+        });
+
+        document.getElementById('btn-speak-question').addEventListener('click', (e) => {
+            e.stopPropagation();
+            playSfx('tap');
+            speakCurrentProblem();
+        });
+
+        document.getElementById('btn-count-hint').addEventListener('click', () => {
+            playSfx('tap');
+            if (state.operator === '+') {
+                updateTenFrames(state.currNumA);
+                speakVoice(`先数好前边${state.currNumA}个蛋，再接着往后数${state.currNumB}个，就是答案啦！`);
+                showToast("💡", `先填好 ${state.currNumA} 个，再往后数 ${state.currNumB} 个就对啦！`);
+            } else {
+                updateTenFrames(state.currNumA);
+                speakVoice(`原本有${state.currNumA}个蛋，被狐狸拿走${state.currNumB}个，数一数剩下的吧！`);
+                showToast("💡", `先看全部 ${state.currNumA} 个蛋，然后拿掉 ${state.currNumB} 个！`);
+            }
+        });
+
+        document.getElementById('btn-skip').addEventListener('click', () => {
+            playSfx('tap');
+            generateMathProblem();
+        });
+
+        window.addEventListener('click', function unlockAudioOnce() {
+            initAudio();
+            window.removeEventListener('click', unlockAudioOnce);
+        }, { once: true });
+
+        window.addEventListener('load', () => {
+            generateMathProblem();
+            updateBarnUI();
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.onvoiceschanged = () => {
+                    window.speechSynthesis.getVoices();
+                };
+            }
+        });
+    </script>
+</body>
+</html>
