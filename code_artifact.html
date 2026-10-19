@@ -64,9 +64,39 @@
         .anim-stamp {
             animation: stampIn 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
         }
+        /* 返回游戏大厅悬浮按钮 */
+        .back-home {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 7px 14px 7px 10px;
+            background: rgba(255, 255, 255, .95);
+            border: 3px solid #F59E0B;
+            border-radius: 999px;
+            color: #7A4A12;
+            font-weight: 900;
+            font-size: 15px;
+            text-decoration: none;
+            box-shadow: 0 4px 0 rgba(0, 0, 0, .18);
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+        .back-home:active { transform: translateY(2px); box-shadow: 0 2px 0 rgba(0, 0, 0, .18); }
+        .back-home svg { width: 18px; height: 18px; display: block; }
+        body { padding-top: 58px !important; }
     </style>
 </head>
 <body class="flex flex-col items-center justify-between min-h-screen p-2 md:p-4">
+
+    <!-- 返回游戏大厅 -->
+    <a class="back-home" href="./index.html" aria-label="返回游戏大厅">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5 L8 12 L15 19" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span>返回</span>
+    </a>
 
     <!-- Top Status Bar -->
     <header class="w-full max-w-xl flex items-center justify-between mb-2 z-20">

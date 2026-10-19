@@ -87,9 +87,40 @@
         .slot-highlight {
             animation: slotPulsate 0.5s infinite alternate;
         }
+
+        /* 返回游戏大厅悬浮按钮 */
+        .back-home {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 7px 14px 7px 10px;
+            background: rgba(255, 255, 255, .95);
+            border: 3px solid #DC2626;
+            border-radius: 999px;
+            color: #B91C1C;
+            font-weight: 900;
+            font-size: 15px;
+            text-decoration: none;
+            box-shadow: 0 4px 0 rgba(0, 0, 0, .25);
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+        .back-home:active { transform: translateY(2px); box-shadow: 0 2px 0 rgba(0, 0, 0, .25); }
+        .back-home svg { width: 18px; height: 18px; display: block; }
+        body { padding-top: 58px !important; }
     </style>
 </head>
 <body class="bg-gradient-to-b from-indigo-950 via-slate-900 to-sky-950 min-h-screen flex flex-col justify-between overflow-x-hidden p-2 sm:p-4 text-white">
+
+    <!-- 返回游戏大厅 -->
+    <a class="back-home" href="./index.html" aria-label="返回游戏大厅">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5 L8 12 L15 19" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span>返回</span>
+    </a>
 
     <header class="w-full max-w-4xl mx-auto flex items-center justify-between px-3 py-2 bg-slate-800/80 backdrop-blur-md rounded-2xl border-2 border-amber-400/40 shadow-lg">
         <div class="flex items-center space-x-2">
