@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>可乐超能摩托车队：5以内冲刺</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@600;800&family=Noto+Sans+SC:wght@700;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Fredoka', 'Noto Sans SC', system-ui, -apple-system, sans-serif;
+            touch-action: manipulation;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* 3D Mechanical Button Styling */
+        .btn-pedal {
+            transition: all 0.12s cubic-bezier(0.34, 1.56, 0.64, 1);
+            box-shadow: 0 10px 0 rgba(0, 0, 0, 0.25), 0 15px 25px rgba(0,0,0,0.15);
+        }
+        .btn-pedal:active {
+            transform: translateY(6px);
+            box-shadow: 0 4px 0 rgba(0, 0, 0, 0.25), 0 5px 10px rgba(0,0,0,0.15);
+        }
+
+        /* Motorcycle Idle Vibing */
+        @keyframes motoIdle {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            25% { transform: translateY(-2px) rotate(-0.5deg); }
+            75% { transform: translateY(1px) rotate(0.5deg); }
+        }
+        .moto-idle {
+            animation: motoIdle 0.18s infinite ease-in-out;
+        }
+
+        /* Wheelie Rush Zooming Animation */
+        @keyframes motoSprint {
+            0% { transform: translateX(0) rotate(0deg); }
+            20% { transform: translateX(-15px) rotate(-12deg); } /* Front wheel lift wheelie */
+            50% { transform: translateX(50px) rotate(-16deg); }
+            80% { transform: translateX(20px) rotate(-6deg); }
+            100% { transform: translateX(0) rotate(0deg); }
+        }
+        .moto-sprint {
+            animation: motoSprint 1.1s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+
+        /* Flame Exhaust Burst */
+        @keyframes exhaustFlame {
+            0% { transform: scale(0.6) skewX(-15deg); opacity: 0.6; }
+            50% { transform: scale(1.3) skewX(-20deg); opacity: 1; }
+            100% { transform: scale(0.8) skewX(-10deg); opacity: 0.8; }
+        }
+        .flame-active {
+            animation: exhaustFlame 0.12s infinite alternate;
+        }
+
+        /* Track Road Lines Moving */
+        @keyframes roadMove {
+            0% { background-position: 0 0; }
+            100% { background-position: -400px 0; }
+        }
+        .track-running {
+            background: repeating-linear-gradient(90deg, #374151 0px, #374151 40px, #f59e0b 40px, #f59e0b 80px);
+            animation: roadMove 0.8s linear infinite;
+        }
+
+        /* Energy Crystal Bounce & Glow */
+        @keyframes crystalBounce {
+            0% { transform: scale(0.3) translateY(40px); opacity: 0; }
+            70% { transform: scale(1.2) translateY(-6px); opacity: 1; }
+            100% { transform: scale(1) translateY(0); }
+        }
+        .crystal-in {
+            animation: crystalBounce 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        }
+
+        /* Highlight counting slot */
+        @keyframes slotPulsate {
+            0%, 100% { transform: scale(1); filter: drop-shadow(0 0 6px #38bdf8); }
+            50% { transform: scale(1.18); filter: drop-shadow(0 0 16px #38bdf8); }
+        }
+        .slot-highlight {
+            animation: slotPulsate 0.5s infinite alternate;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-b from-indigo-950 via-slate-900 to-sky-950 min-h-screen flex flex-col justify-between overflow-x-hidden p-2 sm:p-4 text-white">
+
+    <header class="w-full max-w-4xl mx-auto flex items-center justify-between px-3 py-2 bg-slate-800/80 backdrop-blur-md rounded-2xl border-2 border-amber-400/40 shadow-lg">
+        <div class="flex items-center space-x-2">
+            <span class="text-3xl filter drop-shadow">🏍️</span>
+            <div>
+                <div class="flex items-center gap-1.5">
+                    <h1 class="text-base sm:text-xl font-black text-amber-400 tracking-wide flex items-center gap-1">
+                        可乐超能机车队
+                    </h1>
+                    <span class="text-[11px] bg-red-500 text-white font-black px-2 py-0.5 rounded-full shadow-sm animate-pulse">
+                        5以内冲刺
+                    </span>
+                </div>
+                <p class="text-[11px] sm:text-xs text-slate-300 font-bold" id="subtitle-tip">
+                    听指令数能量，拧动油门昂昂昂！
+                </p>
+            </div>
+        </div>
+
+        <div class="flex items-center space-x-2 sm:space-x-3">
+            <!-- Golden Helmet Trophy Count -->
+            <div class="flex items-center bg-slate-900/90 px-3 py-1.5 rounded-xl border border-amber-400/50 shadow-inner">
+                <span class="text-2xl mr-1 filter drop-shadow">🏆</span>
+                <span id="trophy-count" class="text-xl sm:text-2xl font-black text-amber-300">0</span>
+            </div>
+
+            <!-- Repeat Voice Prompt Button -->
+            <button id="btn-replay-voice" class="px-3 py-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-slate-950 rounded-xl shadow-md font-black text-xs sm:text-sm active:scale-95 flex items-center space-x-1 border border-amber-200">
+                <span class="text-base">📢</span>
+                <span class="hidden sm:inline">听题目</span>
+            </button>
+        </div>
+    </header>
+
+    <main class="w-full max-w-4xl mx-auto flex-1 flex flex-col justify-center items-center relative my-2 sm:my-3">
+        
+        <!-- Race condition mode indicator -->
+        <div id="mode-badge" class="mb-2 px-4 py-1.5 rounded-full text-sm sm:text-base font-black shadow-lg flex items-center space-x-2 bg-gradient-to-r from-emerald-500 to-teal-500 border-2 border-white/80">
+            <span id="mode-icon">⚡</span>
+            <span id="mode-text">能量充能：变多啦！</span>
+        </div>
+
+        <!-- Motorcycle Arena Box -->
+        <div class="w-full relative flex flex-col items-center justify-center py-2">
+            
+            <!-- Kele & Super Motorcycle Component -->
+            <div id="moto-stage" class="w-full flex justify-center items-end py-2">
+                <div id="moto-body-group" class="relative flex items-end moto-idle transition-transform duration-300">
+                    
+                    <!-- SVG Motorcycle & Kele Rider -->
+                    <div class="relative w-64 sm:w-80 h-40 sm:h-48">
+                        <svg class="w-full h-full drop-shadow-2xl" viewBox="0 0 320 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <!-- Background Speed Sparks -->
+                            <path d="M-20 160 H20" stroke="#f59e0b" stroke-width="4" stroke-linecap="round" opacity="0.6"/>
+                            <path d="M-40 130 H0" stroke="#38bdf8" stroke-width="3" stroke-linecap="round" opacity="0.4"/>
+                            
+                            <!-- Exhaust Pipe -->
+                            <path d="M70 145 L130 142 L145 130" stroke="#94a3b8" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M60 146 L75 145" stroke="#475569" stroke-width="14" stroke-linecap="round"/>
+                            
+                            <!-- Exhaust Fire (Hidden or Active) -->
+                            <g id="exhaust-flame" class="hidden">
+                                <path d="M30 146 Q5 135 15 146 Q0 155 35 148 Z" fill="#ef4444" class="flame-active"/>
+                                <path d="M40 146 Q20 140 25 146 Q15 150 42 147 Z" fill="#fbbf24" class="flame-active"/>
+                            </g>
+
+                            <!-- Back Heavy Wheel -->
+                            <circle cx="80" cy="145" r="36" fill="#1e293b" stroke="#0f172a" stroke-width="8"/>
+                            <circle cx="80" cy="145" r="24" fill="#334155" stroke="#f59e0b" stroke-width="3" stroke-dasharray="8 6"/>
+                            <circle cx="80" cy="145" r="10" fill="#94a3b8"/>
+
+                            <!-- Front Sleek Wheel -->
+                            <circle cx="240" cy="145" r="36" fill="#1e293b" stroke="#0f172a" stroke-width="8"/>
+                            <circle cx="240" cy="145" r="24" fill="#334155" stroke="#f59e0b" stroke-width="3" stroke-dasharray="8 6"/>
+                            <circle cx="240" cy="145" r="10" fill="#94a3b8"/>
+
+                            <!-- Motorcycle Frame Chassis (Super Red & Cyan) -->
+                            <path d="M80 145 L135 125 L190 120 L240 145 L200 95 L140 95 Z" fill="#dc2626" stroke="#991b1b" stroke-width="4"/>
+                            <path d="M140 95 L180 95 L195 115 L130 120 Z" fill="#2563eb"/>
+                            
+                            <!-- Glowing Lightning Decal on Motorcycle -->
+                            <polygon points="155,98 145,110 160,110 150,122 170,108 158,108" fill="#fde047"/>
+
+                            <!-- Front Fork & Steering Handlebar -->
+                            <path d="M240 145 L200 80 L188 78" stroke="#cbd5e1" stroke-width="8" stroke-linecap="round"/>
+                            <circle cx="186" cy="78" r="6" fill="#ea580c"/> <!-- Throttle Grip -->
+
+                            <!-- Motorcycle Windshield -->
+                            <path d="M200 80 L215 55 L195 62 Z" fill="#38bdf8" fill-opacity="0.75" stroke="#0284c7" stroke-width="2"/>
+
+                            <!-- Headlight -->
+                            <path d="M220 90 L235 95 L220 102 Z" fill="#fef08a" stroke="#eab308" stroke-width="2"/>
+                            
+                            <!-- Kele The Cool Rider -->
+                            <!-- Body & Racing Jacket -->
+                            <path d="M125 110 Q145 75 165 85 L185 85" stroke="#0284c7" stroke-width="16" stroke-linecap="round"/>
+                            <!-- Arm holding the throttle -->
+                            <path d="M150 85 L184 78" stroke="#38bdf8" stroke-width="8" stroke-linecap="round"/>
+                            
+                            <!-- Cool Full-face Racing Helmet with "可乐" tag -->
+                            <circle cx="155" cy="55" r="22" fill="#ef4444" stroke="#991b1b" stroke-width="3"/>
+                            <!-- Helmet Visor / Goggles -->
+                            <path d="M155 46 Q178 48 174 62 Q158 64 152 56 Z" fill="#1e293b" stroke="#f59e0b" stroke-width="2"/>
+                            <!-- Helmet Star Decal -->
+                            <polygon points="144,48 146,53 151,53 147,56 149,61 144,58 140,61 141,56 138,53 143,53" fill="#fef08a"/>
+                            <!-- Driver Name Plate -->
+                            <rect x="135" y="68" width="30" height="9" rx="4" fill="#fbbf24" stroke="#d97706" stroke-width="1"/>
+                            <text x="150" y="75" font-size="7" font-weight="900" fill="#78350f" text-anchor="middle" font-family="'Noto Sans SC', sans-serif">可乐骑手</text>
+                        </svg>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- The 5 Physical Energy Battery Slots (The Concrete Abacus) -->
+            <div class="w-full max-w-lg bg-slate-800/90 border-3 border-amber-400 rounded-2xl p-2.5 sm:p-3 shadow-2xl backdrop-blur-md mt-1">
+                <div class="flex items-center justify-between px-2 mb-1.5 text-xs font-black text-amber-300">
+                    <span class="flex items-center gap-1">⚡ 机车能量槽（最多装5个）：</span>
+                    <span id="battery-status-tag" class="bg-amber-400/20 text-amber-300 px-2 py-0.5 rounded-full border border-amber-400/40">
+                        当前能量
+                    </span>
+                </div>
+                
+                <!-- 5 Large Equal Slots -->
+                <div class="grid grid-cols-5 gap-2 sm:gap-3" id="energy-rack">
+                    <!-- Populated dynamically via renderRack() -->
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Racetrack Asphalt Base -->
+        <div class="w-full max-w-2xl h-8 rounded-xl shadow-inner border-t-4 border-slate-600 flex items-center justify-center relative overflow-hidden track-running">
+            <div class="absolute w-full h-1 bg-white/40 top-1"></div>
+            <div class="text-[11px] font-black text-amber-400/80 tracking-widest bg-slate-900/80 px-3 py-0.5 rounded-full">
+                🏁 可乐疾速赛道 🏁
+            </div>
+        </div>
+
+        <!-- Dynamic Speech Dialogue Banner -->
+        <div id="speech-bubble" class="mt-2.5 bg-white border-4 border-amber-400 px-4 py-2 rounded-2xl shadow-xl text-slate-900 font-black text-sm sm:text-base flex items-center gap-2 max-w-lg text-center">
+            <span class="text-2xl animate-bounce">💬</span>
+            <span id="speech-text" class="flex-1 text-slate-800 font-extrabold">
+                可乐骑手就位！点一下屏幕，马上轰油门出发！
+            </span>
+        </div>
+
+    </main>
+
+    <!-- Large Tactile Buttons 1 to 5 with Concrete Dot Patterns for zero-literacy counting -->
+    <footer class="w-full max-w-xl mx-auto pb-4 pt-1 px-1">
+        <div class="text-center mb-1.5">
+            <span class="text-xs sm:text-sm font-black text-amber-300 bg-slate-800/80 px-3 py-1 rounded-full border border-amber-400/40">
+                👇 可乐，点下面的油门踏板充能冲刺：
+            </span>
+        </div>
+
+        <div class="grid grid-cols-5 gap-2 sm:gap-3">
+            <!-- Button 1 -->
+            <button onclick="handlePedalPress(1)" class="btn-pedal bg-gradient-to-b from-rose-400 to-rose-600 hover:from-rose-500 hover:to-rose-700 text-white rounded-2xl p-2 flex flex-col items-center justify-between h-20 sm:h-24 border-2 border-rose-300">
+                <span class="text-2xl sm:text-4xl font-black drop-shadow">1</span>
+                <!-- 1 Dot -->
+                <div class="flex items-center justify-center">
+                    <span class="w-3.5 h-3.5 rounded-full bg-white shadow-md border-2 border-rose-700"></span>
+                </div>
+            </button>
+
+            <!-- Button 2 -->
+            <button onclick="handlePedalPress(2)" class="btn-pedal bg-gradient-to-b from-amber-400 to-amber-600 hover:from-amber-500 hover:to-amber-700 text-white rounded-2xl p-2 flex flex-col items-center justify-between h-20 sm:h-24 border-2 border-amber-300">
+                <span class="text-2xl sm:text-4xl font-black drop-shadow">2</span>
+                <!-- 2 Dots -->
+                <div class="flex items-center justify-center gap-1">
+                    <span class="w-3.5 h-3.5 rounded-full bg-white shadow-md border-2 border-amber-700"></span>
+                    <span class="w-3.5 h-3.5 rounded-full bg-white shadow-md border-2 border-amber-700"></span>
+                </div>
+            </button>
+
+            <!-- Button 3 -->
+            <button onclick="handlePedalPress(3)" class="btn-pedal bg-gradient-to-b from-emerald-400 to-emerald-600 hover:from-emerald-500 hover:to-emerald-700 text-white rounded-2xl p-2 flex flex-col items-center justify-between h-20 sm:h-24 border-2 border-emerald-300">
+                <span class="text-2xl sm:text-4xl font-black drop-shadow">3</span>
+                <!-- 3 Dots (Triangle arrangement) -->
+                <div class="flex flex-wrap items-center justify-center gap-1 max-w-[34px]">
+                    <span class="w-3 h-3 rounded-full bg-white shadow-md border-2 border-emerald-700"></span>
+                    <span class="w-3 h-3 rounded-full bg-white shadow-md border-2 border-emerald-700"></span>
+                    <span class="w-3 h-3 rounded-full bg-white shadow-md border-2 border-emerald-700"></span>
+                </div>
+            </button>
+
+            <!-- Button 4 -->
+            <button onclick="handlePedalPress(4)" class="btn-pedal bg-gradient-to-b from-sky-400 to-sky-600 hover:from-sky-500 hover:to-sky-700 text-white rounded-2xl p-2 flex flex-col items-center justify-between h-20 sm:h-24 border-2 border-sky-300">
+                <span class="text-2xl sm:text-4xl font-black drop-shadow">4</span>
+                <!-- 4 Dots (2x2 Matrix) -->
+                <div class="grid grid-cols-2 gap-1">
+                    <span class="w-3 h-3 rounded-full bg-white shadow-md border-2 border-sky-700"></span>
+                    <span class="w-3 h-3 rounded-full bg-white shadow-md border-2 border-sky-700"></span>
+                    <span class="w-3 h-3 rounded-full bg-white shadow-md border-2 border-sky-700"></span>
+                    <span class="w-3 h-3 rounded-full bg-white shadow-md border-2 border-sky-700"></span>
+                </div>
+            </button>
+
+            <!-- Button 5 -->
+            <button onclick="handlePedalPress(5)" class="btn-pedal bg-gradient-to-b from-purple-400 to-purple-600 hover:from-purple-500 hover:to-purple-700 text-white rounded-2xl p-2 flex flex-col items-center justify-between h-20 sm:h-24 border-2 border-purple-300">
+                <span class="text-2xl sm:text-4xl font-black drop-shadow">5</span>
+                <!-- 5 Dots (Dice pattern) -->
+                <div class="flex flex-wrap items-center justify-center gap-1 max-w-[38px]">
+                    <span class="w-2.5 h-2.5 rounded-full bg-white shadow-md border-2 border-purple-700"></span>
+                    <span class="w-2.5 h-2.5 rounded-full bg-white shadow-md border-2 border-purple-700"></span>
+                    <span class="w-2.5 h-2.5 rounded-full bg-white shadow-md border-2 border-purple-700"></span>
+                    <span class="w-2.5 h-2.5 rounded-full bg-white shadow-md border-2 border-purple-700"></span>
+                    <span class="w-2.5 h-2.5 rounded-full bg-white shadow-md border-2 border-purple-700"></span>
+                </div>
+            </button>
+        </div>
+    </footer>
+
+    <script>
+        // Game state variables
+        let currentProblem = null;
+        let trophyCount = 0;
+        let isLocked = false;
+        let audioInitialized = false;
+        let lastVoiceText = "";
+
+        // Web Audio synthesized motorcycle engine roaring sound generator
+        let audioCtx = null;
+
+        function initAudio() {
+            if (!audioInitialized) {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                audioCtx = new AudioContext();
+                audioInitialized = true;
+            }
+            if (audioCtx && audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        /**
+         * Synthesizes genuine motorcycle sounds purely with Web Audio API (Zero external assets)
+         * - 'rev': Real "Ang! Ang! Ang——Brooom!" motorcycle throttle roar with pitch envelope & distortion
+         * - 'idle': Low rhythmic motorcycle engine thumping
+         * - 'correct': Joyful victory chime
+         * - 'gentle': Reassuring warm bell
+         * - 'count': Crisp crystal chime
+         */
+        function playMotorSound(type) {
+            initAudio();
+            if (!audioCtx) return;
+
+            const now = audioCtx.currentTime;
+
+            if (type === 'rev') {
+                // Synthesize realistic motorcycle throttle blips: "Ang! Ang! Ang-Broom!"
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                const filter = audioCtx.createBiquadFilter();
+
+                // Sawtooth gives the mechanical raw engine buzz
+                osc.type = 'sawtooth';
+                filter.type = 'lowpass';
+                filter.Q.value = 4.0;
+
+                // Blip 1: "Ang!"
+                osc.frequency.setValueAtTime(65, now);
+                osc.frequency.exponentialRampToValueAtTime(160, now + 0.12);
+                osc.frequency.exponentialRampToValueAtTime(80, now + 0.25);
+                filter.frequency.setValueAtTime(300, now);
+                filter.frequency.exponentialRampToValueAtTime(1400, now + 0.12);
+                filter.frequency.exponentialRampToValueAtTime(400, now + 0.25);
+
+                // Blip 2: "Ang!"
+                osc.frequency.exponentialRampToValueAtTime(190, now + 0.38);
+                osc.frequency.exponentialRampToValueAtTime(95, now + 0.52);
+                filter.frequency.exponentialRampToValueAtTime(1700, now + 0.38);
+                filter.frequency.exponentialRampToValueAtTime(500, now + 0.52);
+
+                // Long Pull: "Ang——BROOOOOM!"
+                osc.frequency.exponentialRampToValueAtTime(260, now + 0.75);
+                osc.frequency.exponentialRampToValueAtTime(210, now + 1.15);
+                osc.frequency.exponentialRampToValueAtTime(45, now + 1.45);
+                filter.frequency.exponentialRampToValueAtTime(2400, now + 0.75);
+                filter.frequency.exponentialRampToValueAtTime(1600, now + 1.15);
+                filter.frequency.exponentialRampToValueAtTime(200, now + 1.45);
+
+                gain.gain.setValueAtTime(0.01, now);
+                gain.gain.linearRampToValueAtTime(0.35, now + 0.12);
+                gain.gain.linearRampToValueAtTime(0.2, now + 0.25);
+                gain.gain.linearRampToValueAtTime(0.4, now + 0.38);
+                gain.gain.linearRampToValueAtTime(0.25, now + 0.52);
+                gain.gain.linearRampToValueAtTime(0.45, now + 0.75);
+                gain.gain.linearRampToValueAtTime(0.001, now + 1.45);
+
+                osc.connect(filter);
+                filter.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                osc.start(now);
+                osc.stop(now + 1.45);
+
+            } else if (type === 'correct') {
+                // Bright victory melody
+                const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+                notes.forEach((freq, index) => {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.value = freq;
+                    gain.gain.setValueAtTime(0.18, now + index * 0.08);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + index * 0.08 + 0.25);
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.start(now + index * 0.08);
+                    osc.stop(now + index * 0.08 + 0.25);
+                });
+
+            } else if (type === 'gentle') {
+                // Warm wooden chime for gentle guidance
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(392, now); // G4
+                osc.frequency.exponentialRampToValueAtTime(329.63, now + 0.2); // E4
+                gain.gain.setValueAtTime(0.2, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start(now);
+                osc.stop(now + 0.35);
+
+            } else if (type === 'count') {
+                // High clear coin crystal sound
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(880, now);
+                osc.frequency.exponentialRampToValueAtTime(1320, now + 0.12);
+                gain.gain.setValueAtTime(0.22, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start(now);
+                osc.stop(now + 0.18);
+            }
+        }
+
+        function speakKele(text, customRate = 0.86, onEndCallback = null) {
+            lastVoiceText = text;
+            const bubbleText = document.getElementById('speech-text');
+            bubbleText.textContent = text;
+
+            if (!('speechSynthesis' in window)) {
+                if (onEndCallback) onEndCallback();
+                return;
+            }
+
+            window.speechSynthesis.cancel();
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'zh-CN';
+            utterance.rate = customRate; // Preschoolers understand better with 0.85x speed
+            utterance.pitch = 1.35; // Cheerful, lively tone
+
+            // Look for pleasant Chinese voices
+            const voices = window.speechSynthesis.getVoices();
+            const preferredVoice = voices.find(v => v.lang.includes('zh') || v.lang.includes('cmn'));
+            if (preferredVoice) {
+                utterance.voice = preferredVoice;
+            }
+
+            if (onEndCallback) {
+                utterance.onend = () => onEndCallback();
+                utterance.onerror = () => onEndCallback();
+            }
+
+            window.speechSynthesis.speak(utterance);
+        }
+
+        /**
+         * Strictly generates situations within 1 to 5:
+         * Addition: initial + change = target (target <= 5)
+         * Subtraction: initial - change = target (target >= 1, initial <= 5)
+         */
+        function generateProblem() {
+            const isAdd = Math.random() > 0.45; // 55% addition, 45% subtraction
+
+            if (isAdd) {
+                const target = Math.floor(Math.random() * 4) + 2; // 2, 3, 4, 5
+                const initial = Math.floor(Math.random() * (target - 1)) + 1; // 1 to target-1
+                const change = target - initial;
+
+                return {
+                    type: 'add',
+                    initial: initial,
+                    change: change,
+                    target: target,
+                    voice: `可乐注意！车上原有 ${initial} 块能量电池，机械臂又送来 ${change} 块！可乐，现在一共有几块电池呢？快给摩托车充能！`
+                };
+            } else {
+                const initial = Math.floor(Math.random() * 4) + 2; // 2, 3, 4, 5
+                const change = Math.floor(Math.random() * (initial - 1)) + 1; // 1 to initial-1
+                const target = initial - change;
+
+                return {
+                    type: 'sub',
+                    initial: initial,
+                    change: change,
+                    target: target,
+                    voice: `帅气冲刺！车上原本有 ${initial} 块能量电池，喷火用掉了 ${change} 块！可乐你看，车上还剩几块能量呢？`
+                };
+            }
+        }
+
+        function renderRack(problem) {
+            const rack = document.getElementById('energy-rack');
+            rack.innerHTML = '';
+
+            const modeBadge = document.getElementById('mode-badge');
+            const modeIcon = document.getElementById('mode-icon');
+            const modeText = document.getElementById('mode-text');
+            const statusTag = document.getElementById('battery-status-tag');
+
+            if (problem.type === 'add') {
+                modeBadge.className = "mb-2 px-4 py-1.5 rounded-full text-sm sm:text-base font-black shadow-lg flex items-center space-x-2 bg-gradient-to-r from-emerald-500 to-teal-500 border-2 border-white/80";
+                modeIcon.textContent = "⚡➕";
+                modeText.textContent = `充能中：送来 +${problem.change} 块能量！`;
+                statusTag.textContent = `原有 ${problem.initial} 块 + 新送 ${problem.change} 块`;
+            } else {
+                modeBadge.className = "mb-2 px-4 py-1.5 rounded-full text-sm sm:text-base font-black shadow-lg flex items-center space-x-2 bg-gradient-to-r from-amber-500 to-rose-500 border-2 border-white/80";
+                modeIcon.textContent = "🔥➖";
+                modeText.textContent = `冲刺喷火：消耗 -${problem.change} 块能量！`;
+                statusTag.textContent = `原本 ${problem.initial} 块 - 用掉 ${problem.change} 块`;
+            }
+
+            // Always render 5 transparent glass energy slots
+            for (let i = 0; i < 5; i++) {
+                const slot = document.createElement('div');
+                slot.className = "w-full h-16 sm:h-20 rounded-xl bg-slate-900/90 border-2 border-dashed border-sky-400/50 flex flex-col items-center justify-center relative overflow-hidden shadow-inner energy-cell";
+                slot.dataset.index = i;
+
+                let hasBattery = false;
+                let isNewEnergy = false;
+                let isConsumedEnergy = false;
+
+                if (problem.type === 'add') {
+                    if (i < problem.initial) {
+                        hasBattery = true;
+                    } else if (i < problem.target) {
+                        hasBattery = true;
+                        isNewEnergy = true;
+                    }
+                } else {
+                    // Subtraction
+                    if (i < problem.target) {
+                        hasBattery = true;
+                    } else if (i < problem.initial) {
+                        hasBattery = true;
+                        isConsumedEnergy = true;
+                    }
+                }
+
+                if (hasBattery) {
+                    slot.classList.remove('border-dashed', 'border-sky-400/50');
+                    slot.classList.add('border-solid', 'border-amber-400', 'bg-slate-800/90');
+
+                    const crystal = document.createElement('div');
+                    crystal.className = "flex flex-col items-center justify-center";
+
+                    if (isNewEnergy) {
+                        // Added newly: Bright gold flame crystal with hop animation
+                        crystal.innerHTML = `
+                            <span class="text-3xl sm:text-4xl filter drop-shadow crystal-in">⚡</span>
+                            <span class="text-[9px] font-black bg-emerald-500 text-white px-1.5 rounded-full mt-0.5 animate-pulse">新能量</span>
+                        `;
+                    } else if (isConsumedEnergy) {
+                        // Consumed: Faded with spent flame mark
+                        crystal.innerHTML = `
+                            <span class="text-3xl sm:text-4xl filter grayscale opacity-30">⚡</span>
+                            <span class="text-[9px] font-black bg-rose-600 text-white px-1.5 rounded-full mt-0.5">已消耗</span>
+                        `;
+                    } else {
+                        // Standard existing energetic battery
+                        crystal.innerHTML = `
+                            <span class="text-3xl sm:text-4xl filter drop-shadow">⚡</span>
+                            <span class="text-[10px] font-black text-amber-300">${i + 1}</span>
+                        `;
+                    }
+                    slot.appendChild(crystal);
+                } else {
+                    // Empty slot: clear slot number so Kele sees exactly what's unfilled
+                    slot.innerHTML = `
+                        <div class="w-6 h-6 rounded-full border border-dashed border-slate-600 flex items-center justify-center text-xs text-slate-500 font-bold">
+                            ${i + 1}
+                        </div>
+                    `;
+                }
+
+                rack.appendChild(slot);
+            }
+        }
+
+        function guideKeleCounting(onFinish) {
+            const slots = document.querySelectorAll('.energy-cell');
+            const targetTotal = currentProblem.target;
+            let countIndex = 0;
+
+            function highlightNextSlot() {
+                if (countIndex < targetTotal) {
+                    const currentSlot = slots[countIndex];
+                    currentSlot.classList.add('slot-highlight', 'bg-amber-500/30');
+                    playMotorSound('count');
+
+                    countIndex++;
+                    speakKele(`${countIndex}`, 0.88, () => {
+                        setTimeout(() => {
+                            currentSlot.classList.remove('slot-highlight', 'bg-amber-500/30');
+                            highlightNextSlot();
+                        }, 220);
+                    });
+                } else {
+                    if (onFinish) onFinish();
+                }
+            }
+
+            highlightNextSlot();
+        }
+
+        function startNewRound() {
+            isLocked = false;
+            currentProblem = generateProblem();
+            renderRack(currentProblem);
+
+            // Hide flame
+            document.getElementById('exhaust-flame').classList.add('hidden');
+
+            setTimeout(() => {
+                speakKele(currentProblem.voice);
+            }, 400);
+        }
+
+        function handlePedalPress(chosenNumber) {
+            if (isLocked || !currentProblem) return;
+            initAudio();
+
+            if (chosenNumber === currentProblem.target) {
+                // Correct answer!
+                isLocked = true;
+                trophyCount++;
+                document.getElementById('trophy-count').textContent = trophyCount;
+
+                // 1. Play real engine roaring and wheelie rush
+                playMotorSound('rev');
+                const flame = document.getElementById('exhaust-flame');
+                const moto = document.getElementById('moto-body-group');
+
+                flame.classList.remove('hidden');
+                moto.classList.add('moto-sprint');
+
+                // 2. Confetti burst
+                if (typeof confetti === 'function') {
+                    confetti({
+                        particleCount: 70,
+                        spread: 80,
+                        origin: { y: 0.6 }
+                    });
+                }
+
+                // 3. Audio celebration
+                const praises = [
+                    `太帅了可乐！答对啦，是 ${chosenNumber}！油门拧到底，昂昂昂——超车咯！`,
+                    `可乐太厉害了！就是 ${chosenNumber} 块能量！引擎咆哮，疾速冲刺！`,
+                    `太棒了可乐骑手！算得真准，答对了 ${chosenNumber}！机车全速前进！`
+                ];
+                const selectedPraise = praises[Math.floor(Math.random() * praises.length)];
+
+                setTimeout(() => {
+                    speakKele(selectedPraise, 0.95, () => {
+                        moto.classList.remove('moto-sprint');
+                        flame.classList.add('hidden');
+                        setTimeout(() => {
+                            startNewRound();
+                        }, 1000);
+                    });
+                }, 700);
+
+            } else {
+                // Wrong answer: gentle, reassuring guidance without punishment
+                isLocked = true;
+                playMotorSound('gentle');
+
+                const gentleText = `没关系可乐，我们一起来数一数车上的发光能量吧：`;
+                speakKele(gentleText, 0.88, () => {
+                    guideKeleCounting(() => {
+                        const promptAgain = `可乐看，一共有 ${currentProblem.target} 块能量在发光，再踩一次踏板吧！`;
+                        speakKele(promptAgain, 0.88, () => {
+                            isLocked = false;
+                        });
+                    });
+                });
+            }
+        }
+
+        // Replay voice prompt button
+        document.getElementById('btn-replay-voice').addEventListener('click', () => {
+            initAudio();
+            if (currentProblem) {
+                speakKele(currentProblem.voice);
+            }
+        });
+
+        // Initialize voice engine and first-gesture trigger
+        window.addEventListener('DOMContentLoaded', () => {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.onvoiceschanged = () => {
+                    window.speechSynthesis.getVoices();
+                };
+            }
+
+            const startTouchHandler = () => {
+                initAudio();
+                document.body.removeEventListener('click', startTouchHandler);
+                document.body.removeEventListener('touchstart', startTouchHandler);
+                if (!currentProblem) {
+                    playMotorSound('rev');
+                    speakKele("可乐骑手就位！戴好头盔，准备出发咯！", 0.88, () => {
+                        startNewRound();
+                    });
+                }
+            };
+
+            document.body.addEventListener('click', startTouchHandler, { once: true });
+            document.body.addEventListener('touchstart', startTouchHandler, { once: true });
+        });
+    </script>
+</body>
+</html>

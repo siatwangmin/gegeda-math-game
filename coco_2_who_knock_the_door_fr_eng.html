@@ -1,0 +1,857 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>《咚咚咚！谁在串门？》- 椰子的小动物英法双语冒险</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/canvas-confetti/1.6.0/confetti.browser.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&family=Fredoka+One&display=swap" rel="stylesheet">
+    
+    <style>
+        * {
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'ZCOOL KuaiLe', cursive, 'Fredoka One', sans-serif;
+            background: linear-gradient(180deg, #A8E6CF 0%, #DCEDC1 40%, #FFD3B6 100%);
+            min-height: 100vh;
+            margin: 0;
+            padding: 0;
+            touch-action: manipulation;
+            overflow-x: hidden;
+        }
+        /* Chunky 3D buttons */
+        .btn-chubby {
+            box-shadow: 0 6px 0 rgba(0,0,0,0.18), 0 10px 15px rgba(0,0,0,0.12);
+            transition: transform 0.08s ease, box-shadow 0.08s ease;
+        }
+        .btn-chubby:active {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 rgba(0,0,0,0.18), 0 4px 6px rgba(0,0,0,0.12);
+        }
+        /* Door swinging 3D animation */
+        .door-perspective {
+            perspective: 1000px;
+        }
+        .door-panel {
+            transform-origin: left center;
+            transition: transform 0.8s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+        .door-panel.opened {
+            transform: rotateY(-110deg);
+        }
+        /* Knock wobble */
+        @keyframes knockShake {
+            0%, 100% { transform: rotate(0deg); }
+            20% { transform: rotate(-2deg) scale(1.02); }
+            40% { transform: rotate(2deg) scale(1.02); }
+            60% { transform: rotate(-1deg); }
+            80% { transform: rotate(1deg); }
+        }
+        .anim-knock {
+            animation: knockShake 0.4s ease-in-out;
+        }
+        /* Guide breathing */
+        @keyframes guideBob {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-6px); }
+        }
+        .guide-bob {
+            animation: guideBob 2.2s ease-in-out infinite;
+        }
+        /* Stamp animation */
+        @keyframes popIn {
+            0% { transform: scale(0.4); opacity: 0; }
+            70% { transform: scale(1.15); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .anim-pop {
+            animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+    </style>
+</head>
+<body class="flex flex-col items-center justify-between min-h-screen p-2 md:p-4">
+
+    <!-- Top Navigation & Score Header -->
+    <header class="w-full max-w-xl flex items-center justify-between mb-2 z-20">
+        <!-- Coconut Player Badge -->
+        <div class="flex items-center gap-2">
+            <div class="bg-amber-100 border-3 border-amber-600 rounded-full px-3.5 py-1.5 shadow flex items-center gap-2">
+                <span class="text-2xl">🥥</span>
+                <span class="text-amber-950 font-black text-sm md:text-base">椰子的小屋</span>
+            </div>
+            <div class="bg-emerald-100 border-3 border-emerald-600 rounded-full px-3 py-1.5 shadow flex items-center gap-1.5 text-xs md:text-sm font-black text-emerald-900">
+                <span>🎉 来客:</span>
+                <span id="party-guest-count" class="text-emerald-700 text-lg font-extrabold">0</span>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-2">
+            <!-- Audio Toggle -->
+            <button id="btn-sound" class="w-10 h-10 bg-yellow-300 hover:bg-yellow-400 border-2 border-yellow-600 rounded-full flex items-center justify-center text-xl shadow btn-chubby">
+                🔊
+            </button>
+            <!-- Living Room Party Modal -->
+            <button id="btn-open-party" class="bg-gradient-to-r from-purple-500 to-indigo-500 text-white font-black px-3.5 py-1.5 border-2 border-purple-800 rounded-full shadow flex items-center gap-1.5 btn-chubby text-xs md:text-sm">
+                <span>🛋️</span>
+                <span>客厅派对</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Game Scene -->
+    <main class="w-full max-w-xl flex flex-col items-center gap-3 z-10 flex-grow">
+        
+        <!-- Guides Banner (Barnaby & Gaston) -->
+        <div class="w-full bg-white/85 border-3 border-amber-400 rounded-2xl px-3 py-2 shadow-sm flex items-center justify-between">
+            <!-- English Guide: Barnaby the Corgi -->
+            <div class="flex items-center gap-2 cursor-pointer" id="guide-corgi">
+                <div class="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center text-2xl border-2 border-amber-500 guide-bob">
+                    🐶
+                </div>
+                <div>
+                    <div class="flex items-center gap-1">
+                        <span class="text-xs font-black text-blue-800">Barnaby</span>
+                        <span class="text-xs">🇬🇧</span>
+                    </div>
+                    <span class="text-[11px] text-gray-600 font-bold">教你学英语</span>
+                </div>
+            </div>
+
+            <!-- Central Question Prompt -->
+            <div class="text-center px-1">
+                <span class="text-amber-900 font-black text-sm md:text-base block">咚咚咚！是谁呀？</span>
+                <span class="text-gray-500 text-[11px] font-bold">Who's at the door?</span>
+            </div>
+
+            <!-- French Guide: Gaston the Frog -->
+            <div class="flex items-center gap-2 cursor-pointer" id="guide-frog">
+                <div class="text-right">
+                    <div class="flex items-center justify-end gap-1">
+                        <span class="text-xs">🇫🇷</span>
+                        <span class="text-xs font-black text-emerald-800">Gaston</span>
+                    </div>
+                    <span class="text-[11px] text-gray-600 font-bold">教你学法语</span>
+                </div>
+                <div class="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center text-2xl border-2 border-emerald-500 guide-bob">
+                    🐸
+                </div>
+            </div>
+        </div>
+
+        <!-- 3D Interactive Cottage Door Stage -->
+        <div class="w-full bg-gradient-to-b from-amber-100 via-orange-50 to-amber-200 border-4 border-amber-700 rounded-3xl p-4 shadow-xl flex flex-col items-center justify-center relative min-h-[290px] md:min-h-[320px] overflow-hidden">
+            
+            <!-- Window with peek silhouette on the cottage wall -->
+            <div class="absolute top-3 left-4 w-16 h-16 bg-sky-200 border-3 border-amber-800 rounded-xl overflow-hidden shadow-inner flex items-center justify-center">
+                <div class="w-full h-full bg-amber-200/50 flex items-center justify-center relative">
+                    <span id="window-silhouette" class="text-3xl filter blur-[3px] opacity-75 transform scale-110">🦁</span>
+                    <!-- Window panes -->
+                    <div class="absolute inset-x-0 top-1/2 h-0.5 bg-amber-800"></div>
+                    <div class="absolute inset-y-0 left-1/2 w-0.5 bg-amber-800"></div>
+                </div>
+            </div>
+
+            <!-- Clue Callout Action Button -->
+            <div class="absolute top-3 right-4 flex flex-col gap-1.5 items-end">
+                <button id="btn-replay-clue" class="bg-rose-500 hover:bg-rose-600 text-white font-black text-xs md:text-sm px-3 py-1.5 rounded-full border-2 border-rose-800 shadow btn-chubby flex items-center gap-1.5 active:scale-95">
+                    <span>👂</span>
+                    <span>再听叫声</span>
+                </button>
+                <div id="door-clue-badge" class="bg-amber-300 text-amber-950 font-black text-[11px] px-2.5 py-0.5 rounded-full border border-amber-600 shadow-sm">
+                    露出一截线索！
+                </div>
+            </div>
+
+            <!-- Cottage Door Frame Container -->
+            <div class="relative w-44 h-64 md:w-48 md:h-68 bg-amber-950 rounded-t-full border-4 border-amber-900 shadow-2xl flex items-center justify-center door-perspective mt-6">
+                
+                <!-- Room Inside / Revealed Animal -->
+                <div id="door-interior" class="absolute inset-0 bg-gradient-to-b from-yellow-100 to-amber-200 rounded-t-full flex flex-col items-center justify-center p-3 text-center">
+                    <div id="interior-animal-avatar" class="text-7xl md:text-8xl my-1 transform transition-all duration-300">
+                        🦁
+                    </div>
+                    <!-- Fun speech bubble when opened -->
+                    <div id="interior-greeting-box" class="hidden flex flex-col items-center gap-1 bg-white/95 border-2 border-amber-600 px-3 py-1 rounded-xl shadow mt-1">
+                        <span id="greeting-text" class="text-amber-950 font-black text-sm">Hello! Salut!</span>
+                    </div>
+                </div>
+
+                <!-- Swinging Door Panel -->
+                <div id="main-door" class="door-panel absolute inset-0 bg-gradient-to-r from-amber-700 via-amber-600 to-amber-800 rounded-t-full border-3 border-amber-900 shadow-xl flex flex-col items-center justify-center cursor-pointer">
+                    <!-- Door Wood Planks Effect -->
+                    <div class="w-full h-full flex flex-col justify-around py-4 px-2 opacity-30 pointer-events-none">
+                        <div class="border-b-2 border-black/40 w-full"></div>
+                        <div class="border-b-2 border-black/40 w-full"></div>
+                        <div class="border-b-2 border-black/40 w-full"></div>
+                    </div>
+
+                    <!-- Knocker Ring -->
+                    <div class="absolute top-16 w-12 h-12 rounded-full border-4 border-yellow-500 bg-amber-900 flex items-center justify-center shadow">
+                        <div class="w-5 h-7 border-3 border-yellow-400 rounded-b-full"></div>
+                    </div>
+
+                    <!-- Door Knocker Handle / Peep Slot -->
+                    <div class="absolute top-36 right-3 w-5 h-8 bg-yellow-400 rounded-full border-2 border-yellow-700 shadow-md"></div>
+
+                    <!-- Fun Little Peeking Feature (Tip of tail or ears sneaking through door crack) -->
+                    <div id="peek-sneak-clue" class="absolute -bottom-2 right-4 text-3xl filter drop-shadow">
+                        🐾
+                    </div>
+                </div>
+            </div>
+
+            <!-- Post-Reveal Bilingual Sound Bar (Shows up after opening door) -->
+            <div id="bilingual-word-bar" class="hidden absolute bottom-2 w-11/12 bg-white/95 border-3 border-yellow-500 rounded-2xl p-2.5 shadow-lg flex items-center justify-around z-30 anim-pop">
+                <!-- English Speak Button -->
+                <button id="btn-speak-en" class="flex items-center gap-2 bg-blue-50 hover:bg-blue-100 border-2 border-blue-400 rounded-xl px-3 py-1.5 btn-chubby">
+                    <span class="text-2xl">🇬🇧</span>
+                    <div class="text-left">
+                        <span class="text-xs text-blue-600 font-bold block">英语 English</span>
+                        <span id="word-en" class="text-base md:text-lg font-black text-blue-950">Lion</span>
+                    </div>
+                    <span class="text-sm">🔊</span>
+                </button>
+
+                <!-- French Speak Button -->
+                <button id="btn-speak-fr" class="flex items-center gap-2 bg-emerald-50 hover:bg-emerald-100 border-2 border-emerald-400 rounded-xl px-3 py-1.5 btn-chubby">
+                    <span class="text-2xl">🇫🇷</span>
+                    <div class="text-left">
+                        <span class="text-xs text-emerald-600 font-bold block">法语 Français</span>
+                        <span id="word-fr" class="text-base md:text-lg font-black text-emerald-950">Le Lion</span>
+                    </div>
+                    <span class="text-sm">🔊</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- 3 Big Animal Candidate Buttons (Designed for Coconut's Little Hands) -->
+        <div class="w-full">
+            <div class="text-center text-xs md:text-sm font-black text-amber-950 mb-1.5 flex items-center justify-center gap-1">
+                <span>👇</span>
+                <span>猜猜是谁在敲门？用手指戳一个：</span>
+            </div>
+
+            <div id="choices-container" class="grid grid-cols-3 gap-3 w-full">
+                <!-- 3 Large candidate cards dynamically rendered by JS -->
+            </div>
+        </div>
+
+        <!-- Next / Skip Auxiliary Button -->
+        <div class="w-full flex justify-between items-center px-1">
+            <div class="text-xs text-amber-900 font-bold bg-white/70 px-3 py-1 rounded-full border border-amber-300">
+                💡 贴士：多点小国旗，反复听英法发音！
+            </div>
+            <button id="btn-next-question" class="hidden bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold text-xs md:text-sm px-4 py-2 rounded-full border-2 border-emerald-700 shadow btn-chubby flex items-center gap-1 active:scale-95">
+                <span>下一位客人</span>
+                <span>👉</span>
+            </button>
+        </div>
+    </main>
+
+    <!-- Living Room Tea Party Modal (客厅茶话会) -->
+    <div id="party-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-gradient-to-b from-amber-50 to-orange-100 border-8 border-amber-600 rounded-3xl p-5 max-w-md w-full shadow-2xl relative max-h-[88vh] flex flex-col">
+            <div class="flex justify-between items-center mb-3">
+                <h2 class="text-xl md:text-2xl font-black text-amber-950 flex items-center gap-2">
+                    <span>🛋️</span>
+                    <span>椰子家的大客厅茶话会</span>
+                </h2>
+                <button id="btn-close-party" class="w-9 h-9 bg-rose-500 text-white font-black text-lg rounded-full border-2 border-rose-700 shadow">
+                    ✕
+                </button>
+            </div>
+            
+            <p class="text-xs text-amber-800 mb-2 font-bold">
+                猜对的小动物都会进屋喝热可可！点击小动物可以重听它们的名字哦：
+            </p>
+
+            <!-- Guests Grid -->
+            <div id="party-guests-grid" class="flex-grow overflow-y-auto grid grid-cols-3 gap-2.5 p-2 bg-white/80 rounded-2xl border-2 border-amber-300 min-h-[220px]">
+                <!-- Dynamically populated -->
+            </div>
+
+            <div class="mt-3 pt-2 border-t border-amber-300 flex justify-between items-center">
+                <span class="text-xs font-bold text-amber-900">派对嘉宾: <span id="party-progress-count" class="text-purple-700 font-black">0 / 8</span></span>
+                <button id="btn-cheer-all" class="bg-gradient-to-r from-amber-400 to-yellow-500 text-amber-950 font-black px-3.5 py-1.5 rounded-xl text-xs md:text-sm border-2 border-amber-700 btn-chubby flex items-center gap-1">
+                    <span>🎉</span>
+                    <span>全员干杯欢呼</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Soft Audio/Speech Feedback Toast -->
+    <div id="funny-toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-amber-400 border-3 border-amber-700 text-amber-950 px-5 py-2 rounded-full font-black text-sm shadow-2xl z-40 transform translate-y-36 transition-transform duration-300 pointer-events-none flex items-center gap-2">
+        <span id="toast-icon">💨</span>
+        <span id="toast-msg">哎呀，猜错啦！</span>
+    </div>
+
+    <script>
+        /* ========================================================
+           1. ANIMAL KNOWLEDGE BASE (Specially tuned for Kindergarten)
+           ======================================================== */
+        const ANIMAL_CATALOG = [
+            {
+                id: 'lion',
+                nameZh: '狮子',
+                nameEn: 'Lion',
+                nameFr: 'Le lion',
+                emoji: '🦁',
+                peekEmoji: '🐾',
+                soundType: 'roar',
+                introEn: "Here comes a Lion!",
+                introFr: "Voici le lion !",
+                clueDesc: "一圈毛茸茸的金色鬃毛，在大声吼叫！",
+                funnyMove: "威风凛凛地走进来，顺便打了个大哈欠！",
+                bgGradient: 'from-amber-400 to-orange-500'
+            },
+            {
+                id: 'elephant',
+                nameZh: '大象',
+                nameEn: 'Elephant',
+                nameFr: "L'éléphant",
+                emoji: '🐘',
+                peekEmoji: '🎪',
+                soundType: 'trumpet',
+                introEn: "It's an Elephant!",
+                introFr: "C'est l'éléphant !",
+                clueDesc: "门缝里伸出了一根长长的吸尘器鼻子！",
+                funnyMove: "肚子太大差点卡在门框上！",
+                bgGradient: 'from-sky-400 to-blue-500'
+            },
+            {
+                id: 'monkey',
+                nameZh: '猴子',
+                nameEn: 'Monkey',
+                nameFr: 'Le singe',
+                emoji: '🐒',
+                peekEmoji: '🍌',
+                soundType: 'chatter',
+                introEn: "Look, a playful Monkey!",
+                introFr: "Regarde, un singe rigolo !",
+                clueDesc: "一条长尾巴在门梁上荡秋千，手里抓着香蕉！",
+                funnyMove: "踩着香蕉皮滑稽地滑了进来！",
+                bgGradient: 'from-yellow-400 to-amber-500'
+            },
+            {
+                id: 'giraffe',
+                nameZh: '长颈鹿',
+                nameEn: 'Giraffe',
+                nameFr: 'La girafe',
+                emoji: '🦒',
+                peekEmoji: '🌿',
+                soundType: 'chew',
+                introEn: "Wow, a tall Giraffe!",
+                introFr: "Ouah, une grande girafe !",
+                clueDesc: "个子太高啦，长长的花纹脖子穿透了屋顶！",
+                funnyMove: "弯着长脖子，一边嚼着树叶一边进门！",
+                bgGradient: 'from-orange-300 to-amber-500'
+            },
+            {
+                id: 'tiger',
+                nameZh: '老虎',
+                nameEn: 'Tiger',
+                nameFr: 'Le tigre',
+                emoji: '🐯',
+                peekEmoji: '🐾',
+                soundType: 'growl',
+                introEn: "A brave Tiger!",
+                introFr: "Un tigre courageux !",
+                clueDesc: "黑黄相间的帅气斑纹，尾巴一甩一甩！",
+                funnyMove: "悄悄迈着猫步走进来，喵呜一声！",
+                bgGradient: 'from-amber-500 to-red-500'
+            },
+            {
+                id: 'zebra',
+                nameZh: '斑马',
+                nameEn: 'Zebra',
+                nameFr: 'Le zèbre',
+                emoji: '🦓',
+                peekEmoji: '🎹',
+                soundType: 'gallop',
+                introEn: "Here is a Zebra!",
+                introFr: "Voici le zèbre !",
+                clueDesc: "像钢琴黑白键一样漂亮的条纹！",
+                funnyMove: "哒哒哒迈着小碎步跑了进来！",
+                bgGradient: 'from-slate-400 to-slate-600'
+            },
+            {
+                id: 'bear',
+                nameZh: '大熊',
+                nameEn: 'Bear',
+                nameFr: "L'ours",
+                emoji: '🐻',
+                peekEmoji: '🍯',
+                soundType: 'grunt',
+                introEn: "A big friendly Bear!",
+                introFr: "Un grand ours tout doux !",
+                clueDesc: "毛茸茸的圆耳朵，手里抱着一大罐甜蜂蜜！",
+                funnyMove: "捧着蜂蜜罐，一边舔手指一边坐下！",
+                bgGradient: 'from-amber-600 to-stone-700'
+            },
+            {
+                id: 'panda',
+                nameZh: '大熊猫',
+                nameEn: 'Panda',
+                nameFr: 'Le panda',
+                emoji: '🐼',
+                peekEmoji: '🎋',
+                soundType: 'munch',
+                introEn: "A cute Panda!",
+                introFr: "Un adorable panda !",
+                clueDesc: "戴着黑黑的墨镜大眼圈，抱着一根脆脆的竹子！",
+                funnyMove: "一屁股滚进客厅，抱着竹子啃个不停！",
+                bgGradient: 'from-emerald-400 to-teal-600'
+            }
+        ];
+
+        /* Game State */
+        const state = {
+            soundEnabled: true,
+            currentGuest: null,
+            candidateList: [],
+            isDoorOpen: false,
+            canChoose: true,
+            partyGuests: []
+        };
+
+        /* ========================================================
+           2. TONE.JS AUDIO SYNTHESIS & SOUND EFFECTS
+           ======================================================== */
+        let synth, woodSynth, noiseSynth;
+
+        function initAudio() {
+            try {
+                if (window.Tone && !synth) {
+                    Tone.start();
+                    synth = new Tone.PolySynth(Tone.Synth).toDestination();
+                    synth.volume.value = -4;
+
+                    woodSynth = new Tone.MembraneSynth({
+                        pitchDecay: 0.05,
+                        octaves: 3,
+                        oscillator: { type: "sine" },
+                        envelope: { attack: 0.001, decay: 0.2, sustain: 0.01, release: 0.1 }
+                    }).toDestination();
+                    woodSynth.volume.value = 0;
+
+                    noiseSynth = new Tone.NoiseSynth({
+                        noise: { type: 'pink' },
+                        envelope: { attack: 0.005, decay: 0.1, sustain: 0 }
+                    }).toDestination();
+                    noiseSynth.volume.value = -10;
+                }
+            } catch (e) {
+                console.warn("Audio init deferred", e);
+            }
+        }
+
+        function playKnockSound() {
+            if (!state.soundEnabled) return;
+            initAudio();
+            const now = Tone.now();
+            // Three energetic wooden knocks
+            woodSynth.triggerAttackRelease("A2", "8n", now);
+            woodSynth.triggerAttackRelease("A2", "8n", now + 0.14);
+            woodSynth.triggerAttackRelease("G2", "8n", now + 0.28);
+
+            const door = document.getElementById('main-door');
+            door.classList.add('anim-knock');
+            setTimeout(() => door.classList.remove('anim-knock'), 400);
+        }
+
+        function playFanfare() {
+            if (!state.soundEnabled) return;
+            initAudio();
+            const now = Tone.now();
+            synth.triggerAttackRelease(["C4", "E4", "G4"], "8n", now);
+            synth.triggerAttackRelease(["E4", "G4", "C5"], "8n", now + 0.12);
+            synth.triggerAttackRelease(["G4", "B4", "D5"], "8n", now + 0.24);
+            synth.triggerAttackRelease(["C5", "E5", "G5", "C6"], "4n", now + 0.38);
+        }
+
+        function playSillyWrongSound() {
+            if (!state.soundEnabled) return;
+            initAudio();
+            const now = Tone.now();
+            woodSynth.triggerAttackRelease("F1", "8n", now);
+            synth.triggerAttackRelease(["Eb3", "D3"], "8n", now + 0.1);
+        }
+
+        function playAnimalClueSound(type) {
+            if (!state.soundEnabled) return;
+            initAudio();
+            const now = Tone.now();
+            switch (type) {
+                case 'roar':
+                    woodSynth.triggerAttackRelease("C1", "2n", now, 1);
+                    noiseSynth.triggerAttackRelease("8n", now + 0.05);
+                    break;
+                case 'trumpet':
+                    synth.triggerAttackRelease(["C4", "G4", "C5"], "4n", now);
+                    synth.triggerAttackRelease(["D4", "A4", "D5"], "4n", now + 0.25);
+                    break;
+                case 'chatter':
+                    synth.triggerAttackRelease("G5", "16n", now);
+                    synth.triggerAttackRelease("E5", "16n", now + 0.08);
+                    synth.triggerAttackRelease("G5", "16n", now + 0.16);
+                    break;
+                case 'chew':
+                case 'munch':
+                    woodSynth.triggerAttackRelease("D2", "16n", now);
+                    woodSynth.triggerAttackRelease("E2", "16n", now + 0.1);
+                    woodSynth.triggerAttackRelease("D2", "16n", now + 0.2);
+                    break;
+                default:
+                    woodSynth.triggerAttackRelease("C2", "8n", now);
+                    synth.triggerAttackRelease(["G4"], "16n", now + 0.1);
+            }
+        }
+
+        /* ========================================================
+           3. BILINGUAL SPEECH SYNTHESIS ENGINE (EN & FR)
+           ======================================================== */
+        function speakLanguage(text, lang = 'en-US', options = {}) {
+            if (!state.soundEnabled) return;
+            if (!('speechSynthesis' in window)) return;
+
+            try {
+                window.speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = lang;
+                utterance.rate = options.rate || 0.95;
+                utterance.pitch = options.pitch || 1.15;
+
+                const voices = window.speechSynthesis.getVoices();
+                let matchedVoice = null;
+
+                if (lang.startsWith('fr')) {
+                    matchedVoice = voices.find(v => v.lang.startsWith('fr'));
+                } else if (lang.startsWith('en')) {
+                    matchedVoice = voices.find(v => v.lang.startsWith('en'));
+                } else if (lang.startsWith('zh')) {
+                    matchedVoice = voices.find(v => v.lang.startsWith('zh'));
+                }
+
+                if (matchedVoice) {
+                    utterance.voice = matchedVoice;
+                }
+
+                window.speechSynthesis.speak(utterance);
+            } catch (err) {
+                console.warn("Speech synthesis error", err);
+            }
+        }
+
+        function speakDualLanguageSequence(guest) {
+            // Step 1: English with Barnaby
+            speakLanguage(guest.nameEn, 'en-US', { pitch: 1.2, rate: 0.9 });
+
+            // Step 2: Followed warmly by French with Gaston
+            setTimeout(() => {
+                speakLanguage(guest.nameFr, 'fr-FR', { pitch: 1.1, rate: 0.9 });
+            }, 1200);
+        }
+
+        /* ========================================================
+           4. GAMEPLAY MECHANICS & ROUND LOGIC
+           ======================================================== */
+        function setupNewRound() {
+            state.isDoorOpen = false;
+            state.canChoose = true;
+
+            // Pick a target animal (prioritize ones not yet visited)
+            const unvisited = ANIMAL_CATALOG.filter(a => !state.partyGuests.some(g => g.id === a.id));
+            const pool = unvisited.length > 0 ? unvisited : ANIMAL_CATALOG;
+            const chosen = pool[Math.floor(Math.random() * pool.length)];
+            state.currentGuest = chosen;
+
+            // Pick 2 distractor animals
+            const distractors = ANIMAL_CATALOG.filter(a => a.id !== chosen.id);
+            distractors.sort(() => Math.random() - 0.5);
+            const candidates = [chosen, distractors[0], distractors[1]];
+            candidates.sort(() => Math.random() - 0.5);
+            state.candidateList = candidates;
+
+            // Close door visually
+            const door = document.getElementById('main-door');
+            door.classList.remove('opened');
+
+            // Set clue clues in interior
+            document.getElementById('interior-animal-avatar').textContent = chosen.emoji;
+            document.getElementById('window-silhouette').textContent = chosen.emoji;
+            document.getElementById('peek-sneak-clue').textContent = chosen.peekEmoji;
+            document.getElementById('door-clue-badge').textContent = `线索：${chosen.clueDesc}`;
+
+            // Reset reveal badges
+            document.getElementById('bilingual-word-bar').classList.add('hidden');
+            document.getElementById('interior-greeting-box').classList.add('hidden');
+            document.getElementById('btn-next-question').classList.add('hidden');
+
+            renderCandidateButtons();
+
+            // Automatic Knock & Clue Audio after slight delay
+            setTimeout(() => {
+                playKnockSound();
+                setTimeout(() => {
+                    playAnimalClueSound(chosen.soundType);
+                    speakLanguage("咚咚咚！是谁在敲门呀？", "zh-CN", { pitch: 1.2 });
+                }, 400);
+            }, 300);
+        }
+
+        // Render 3 Big candidate cards
+        function renderCandidateButtons() {
+            const container = document.getElementById('choices-container');
+            container.innerHTML = '';
+
+            state.candidateList.forEach((animal) => {
+                const btn = document.createElement('button');
+                btn.className = `bg-gradient-to-b ${animal.bgGradient} border-4 border-white/80 rounded-3xl p-3 flex flex-col items-center justify-center text-center shadow-lg btn-chubby transition-transform active:scale-95 min-h-[105px] md:min-h-[125px] relative overflow-hidden`;
+
+                btn.innerHTML = `
+                    <div class="text-5xl md:text-6xl mb-1 transform transition-transform group-hover:scale-110">
+                        ${animal.emoji}
+                    </div>
+                    <div class="bg-white/90 rounded-full px-3 py-0.5 border border-amber-800/20 text-xs md:text-sm font-black text-amber-950">
+                        ${animal.nameZh}
+                    </div>
+                `;
+
+                btn.addEventListener('click', () => handleCandidateSelect(animal, btn));
+                container.appendChild(btn);
+            });
+        }
+
+        function handleCandidateSelect(selectedAnimal, btnElement) {
+            initAudio();
+            if (!state.canChoose) return;
+
+            if (selectedAnimal.id === state.currentGuest.id) {
+                // Correct!
+                handleSuccessOpenDoor(selectedAnimal, btnElement);
+            } else {
+                // Wrong guess - funny gentle hint
+                handleWrongGuess(selectedAnimal, btnElement);
+            }
+        }
+
+        function handleSuccessOpenDoor(animal, btnElement) {
+            state.canChoose = false;
+            state.isDoorOpen = true;
+
+            // 1. Open door with swinging animation & sound
+            playFanfare();
+            const door = document.getElementById('main-door');
+            door.classList.add('opened');
+
+            // 2. Confetti explosion
+            try {
+                confetti({
+                    particleCount: 65,
+                    spread: 75,
+                    origin: { y: 0.55 },
+                    colors: ['#FFD700', '#FF69B4', '#00CED1', '#32CD32']
+                });
+            } catch (e) {}
+
+            // 3. Reveal Animal Greetings & Bilingual Word Bar
+            document.getElementById('interior-greeting-box').classList.remove('hidden');
+            document.getElementById('greeting-text').textContent = `Hello! Bonjour! 我是${animal.nameZh}！`;
+            document.getElementById('word-en').textContent = animal.nameEn;
+            document.getElementById('word-fr').textContent = animal.nameFr;
+            document.getElementById('bilingual-word-bar').classList.remove('hidden');
+            document.getElementById('btn-next-question').classList.remove('hidden');
+
+            // 4. Add to Party guests list
+            if (!state.partyGuests.some(g => g.id === animal.id)) {
+                state.partyGuests.push(animal);
+                document.getElementById('party-guest-count').textContent = state.partyGuests.length;
+                document.getElementById('party-progress-count').textContent = `${state.partyGuests.length} / ${ANIMAL_CATALOG.length}`;
+            }
+
+            // 5. Sequence: Say Bilingual Words Aloud
+            speakDualLanguageSequence(animal);
+            showToast("🎉", `猜对啦！大门开啦！快听英法发音！`);
+        }
+
+        function handleWrongGuess(selectedAnimal, btnElement) {
+            playSillyWrongSound();
+            btnElement.classList.add('opacity-70');
+            setTimeout(() => btnElement.classList.remove('opacity-70'), 350);
+
+            // Door wobbles
+            const door = document.getElementById('main-door');
+            door.classList.add('anim-knock');
+            setTimeout(() => door.classList.remove('anim-knock'), 400);
+
+            // Friendly encouragement
+            showToast("🙈", `门里不是${selectedAnimal.nameZh}哦！再听听看叫声！`);
+            speakLanguage(`不是${selectedAnimal.nameZh}哦！再听一听它的叫声？`, 'zh-CN', { pitch: 1.25 });
+            
+            // Replay animal hint sound
+            setTimeout(() => {
+                playAnimalClueSound(state.currentGuest.soundType);
+            }, 1200);
+        }
+
+        function showToast(icon, msg) {
+            const toast = document.getElementById('funny-toast');
+            document.getElementById('toast-icon').textContent = icon;
+            document.getElementById('toast-msg').textContent = msg;
+            toast.classList.remove('translate-y-36');
+
+            setTimeout(() => {
+                toast.classList.add('translate-y-36');
+            }, 2000);
+        }
+
+        /* ========================================================
+           5. LIVING ROOM TEA PARTY MODAL (客厅茶话会)
+           ======================================================== */
+        function updatePartyModalUI() {
+            const grid = document.getElementById('party-guests-grid');
+            grid.innerHTML = '';
+
+            ANIMAL_CATALOG.forEach(animal => {
+                const hasJoined = state.partyGuests.some(g => g.id === animal.id);
+                const card = document.createElement('div');
+                card.className = `p-2 rounded-2xl border-2 flex flex-col items-center justify-center text-center transition-all ${
+                    hasJoined ? 'bg-amber-100 border-amber-400 shadow cursor-pointer active:scale-95' : 'bg-gray-100 border-gray-300 opacity-40'
+                }`;
+
+                card.innerHTML = `
+                    <div class="text-3xl md:text-4xl my-1">
+                        ${hasJoined ? animal.emoji : '🚪'}
+                    </div>
+                    <div class="text-xs font-black text-amber-950 truncate w-full">
+                        ${hasJoined ? animal.nameZh : '敲门中...'}
+                    </div>
+                    <div class="text-[10px] text-gray-500 font-bold truncate w-full">
+                        ${hasJoined ? animal.nameEn : '???'}
+                    </div>
+                `;
+
+                if (hasJoined) {
+                    card.addEventListener('click', () => {
+                        playFanfare();
+                        speakDualLanguageSequence(animal);
+                        showToast(animal.emoji, `${animal.nameZh}: ${animal.nameEn} (英) / ${animal.nameFr} (法)`);
+                    });
+                }
+                grid.appendChild(card);
+            });
+        }
+
+        /* ========================================================
+           6. EVENT LISTENERS & HOOKS
+           ======================================================== */
+        // Replay Clue Sound
+        document.getElementById('btn-replay-clue').addEventListener('click', () => {
+            if (state.currentGuest) {
+                playKnockSound();
+                setTimeout(() => {
+                    playAnimalClueSound(state.currentGuest.soundType);
+                    speakLanguage(state.currentGuest.clueDesc, 'zh-CN', { pitch: 1.2 });
+                }, 300);
+            }
+        });
+
+        // Knock on the door by tapping
+        document.getElementById('main-door').addEventListener('click', () => {
+            if (!state.isDoorOpen) {
+                playKnockSound();
+                setTimeout(() => {
+                    if (state.currentGuest) {
+                        playAnimalClueSound(state.currentGuest.soundType);
+                    }
+                }, 350);
+            }
+        });
+
+        // English speech tap
+        document.getElementById('btn-speak-en').addEventListener('click', () => {
+            if (state.currentGuest) {
+                speakLanguage(state.currentGuest.nameEn, 'en-US', { pitch: 1.2 });
+            }
+        });
+
+        // French speech tap
+        document.getElementById('btn-speak-fr').addEventListener('click', () => {
+            if (state.currentGuest) {
+                speakLanguage(state.currentGuest.nameFr, 'fr-FR', { pitch: 1.1 });
+            }
+        });
+
+        // Guide Corgi tap
+        document.getElementById('guide-corgi').addEventListener('click', () => {
+            initAudio();
+            speakLanguage("Hello! I am Barnaby the Corgi! Let's learn animal words in English!", 'en-US');
+            showToast("🐶", "Barnaby: 嗨！我是柯基，教你学动物英语！");
+        });
+
+        // Guide Frog tap
+        document.getElementById('guide-frog').addEventListener('click', () => {
+            initAudio();
+            speakLanguage("Bonjour! Je m'appelle Gaston! Apprenons le français ensemble!", 'fr-FR');
+            showToast("🐸", "Gaston: 蹦啾！我是小青蛙，教你优雅的法语！");
+        });
+
+        // Next Question
+        document.getElementById('btn-next-question').addEventListener('click', () => {
+            setupNewRound();
+        });
+
+        // Party modal open/close
+        document.getElementById('btn-open-party').addEventListener('click', () => {
+            initAudio();
+            updatePartyModalUI();
+            document.getElementById('party-modal').classList.remove('hidden');
+        });
+        document.getElementById('btn-close-party').addEventListener('click', () => {
+            document.getElementById('party-modal').classList.add('hidden');
+        });
+
+        // All cheer celebration in Party
+        document.getElementById('btn-cheer-all').addEventListener('click', () => {
+            playFanfare();
+            try {
+                confetti({ particleCount: 50, spread: 70, origin: { y: 0.6 } });
+            } catch(e){}
+            speakLanguage("Cheers! Santé! 椰子的朋友们一起干杯！", 'zh-CN');
+            showToast("🥂", "动物朋友们戴上派对帽喝热可可啦！");
+        });
+
+        // Toggle sound
+        document.getElementById('btn-sound').addEventListener('click', () => {
+            state.soundEnabled = !state.soundEnabled;
+            document.getElementById('btn-sound').textContent = state.soundEnabled ? '🔊' : '🔇';
+            if (!state.soundEnabled && 'speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+            }
+        });
+
+        // Unlock audio context on initial interaction
+        window.addEventListener('click', function unlockAudioOnce() {
+            initAudio();
+            window.removeEventListener('click', unlockAudioOnce);
+        }, { once: true });
+
+        // Start round on load
+        window.addEventListener('load', () => {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.getVoices();
+                window.speechSynthesis.onvoiceschanged = () => {
+                    window.speechSynthesis.getVoices();
+                };
+            }
+            setupNewRound();
+        });
+    </script>
+</body>
+</html>

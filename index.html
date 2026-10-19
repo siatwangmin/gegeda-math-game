@@ -41,7 +41,27 @@
             flex: 1;
             display: flex;
             min-height: 0;
+            width: 100%;
         }
+
+        /* ===== 两层切换 ===== */
+        .layer { display: none; flex: 1; min-width: 0; min-height: 0; }
+        .layer.active { display: flex; animation: fadeIn .28s ease; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: none; }
+        }
+
+        #role-layer.active { flex-direction: row; }
+
+        #games-layer.active {
+            flex-direction: column;
+            overflow-y: auto;
+            align-items: center;
+        }
+        #games-layer.yezi-bg { background: linear-gradient(180deg, #FFF6D8 0%, #FFE7A3 100%); }
+        #games-layer.kele-bg { background: linear-gradient(180deg, #EAF3FF 0%, #CFE3FF 100%); }
 
         .panel {
             flex: 1;
@@ -52,7 +72,11 @@
             flex-direction: column;
             align-items: center;
             padding: 10px 8px 18px;
-            text-decoration: none;
+            border: 0;
+            cursor: pointer;
+            font: inherit;
+            -webkit-appearance: none;
+            appearance: none;
             transition: filter .15s;
         }
 
@@ -150,6 +174,109 @@
             .panel:hover .go { transform: scale(1.05); }
         }
 
+        /* ===== 第二层：游戏架 ===== */
+        .games-inner {
+            width: 100%;
+            max-width: 560px;
+            padding: 14px 16px 30px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .back {
+            align-self: flex-start;
+            border: 0;
+            cursor: pointer;
+            background: rgba(255, 255, 255, .8);
+            border-radius: 999px;
+            padding: 8px 18px;
+            font: inherit;
+            font-size: 14px;
+            font-weight: 800;
+            color: #4A3728;
+            box-shadow: 0 3px 0 rgba(0, 0, 0, .1);
+            transition: transform .12s;
+        }
+        .back:active { transform: translateY(2px); box-shadow: 0 1px 0 rgba(0, 0, 0, .1); }
+
+        .games-head {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-top: 14px;
+        }
+
+        .avatar-wrap {
+            width: 54px; height: 54px;
+            flex: none;
+            background: #fff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 3px 0 rgba(0, 0, 0, .08);
+        }
+        .avatar-wrap svg { width: 42px; height: 42px; display: block; }
+
+        .games-title {
+            font-size: clamp(21px, 5.4vw, 28px);
+            font-weight: 900;
+            letter-spacing: 1px;
+        }
+        #games-layer.yezi-bg .games-title { color: #7A4A12; }
+        #games-layer.kele-bg .games-title { color: #1D4ED8; }
+
+        .games-sub {
+            margin-top: 2px;
+            font-size: clamp(12px, 3.2vw, 14px);
+            font-weight: 700;
+            color: #8A7A64;
+        }
+
+        .game-card {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            background: #fff;
+            border-radius: 18px;
+            padding: 14px;
+            margin-top: 14px;
+            text-decoration: none;
+            box-shadow: 0 4px 0 rgba(0, 0, 0, .08);
+            transition: transform .12s, box-shadow .12s;
+            animation: cardIn .32s ease backwards;
+        }
+        .game-card:nth-child(2) { animation-delay: .08s; }
+
+        @keyframes cardIn {
+            from { opacity: 0; transform: translateY(14px); }
+            to { opacity: 1; transform: none; }
+        }
+
+        .game-card:active { transform: translateY(2px); box-shadow: 0 2px 0 rgba(0, 0, 0, .08); }
+        @media (hover: hover) {
+            .game-card:hover { transform: translateY(-2px); box-shadow: 0 6px 0 rgba(0, 0, 0, .08); }
+        }
+
+        .g-icon { width: 64px; height: 64px; flex: none; }
+        .g-icon svg { width: 100%; height: 100%; display: block; }
+
+        .g-text { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+        .g-title {
+            font-size: clamp(16px, 4.2vw, 19px);
+            font-weight: 900;
+            color: #3A2A18;
+        }
+        .g-desc {
+            margin-top: 3px;
+            font-size: clamp(12px, 3.2vw, 14px);
+            font-weight: 600;
+            color: #8A7A64;
+        }
+
+        .g-arrow { width: 22px; height: 22px; flex: none; color: #C9BFAE; }
+        .g-arrow svg { width: 100%; height: 100%; display: block; }
+
         /* ===== 动画 ===== */
         @keyframes sway {
             0%, 100% { transform: rotate(-3deg); }
@@ -195,106 +322,252 @@
 <body>
     <header>
         <h1>椰子和可乐的游戏小屋</h1>
-        <p>找到写着自己名字的游戏，点一下就开始！</p>
+        <p>先选小主人，再挑一个游戏开始！</p>
     </header>
     <main>
-        <!-- ===== 椰子：咯咯哒憋不住了 ===== -->
-        <a class="panel yezi" href="./code_artifact.html" aria-label="椰子的游戏：咯咯哒憋不住了">
-            <div class="scene">
-                <div class="grass"></div>
-                <!-- 母鸡和蛋装饰 -->
-                <svg class="deco-hen" viewBox="0 0 120 110" aria-hidden="true">
-                    <path d="M22 62 Q6 46 16 32 Q24 46 32 52 Z" fill="#F3EEE2" stroke="#E0D9C8" stroke-width="2"/>
-                    <ellipse cx="60" cy="70" rx="42" ry="32" fill="#FFFFFF" stroke="#E5E0D5" stroke-width="3"/>
-                    <circle cx="56" cy="30" r="6" fill="#E23B3B"/>
-                    <circle cx="66" cy="26" r="7" fill="#E23B3B"/>
-                    <circle cx="76" cy="31" r="6" fill="#E23B3B"/>
-                    <path d="M94 60 L112 66 L94 72 Z" fill="#F5A623"/>
-                    <circle cx="86" cy="54" r="4" fill="#333333"/>
-                    <ellipse cx="36" cy="100" rx="11" ry="14" fill="#FFE9B8" stroke="#E8C87E" stroke-width="3"/>
-                </svg>
-                <!-- 椰子主角 -->
-                <svg class="hero coconut" viewBox="0 0 200 210" aria-hidden="true">
-                    <defs>
-                        <radialGradient id="husk" cx="38%" cy="30%" r="78%">
-                            <stop offset="0%" stop-color="#B07A42"/>
-                            <stop offset="55%" stop-color="#8B5A2B"/>
-                            <stop offset="100%" stop-color="#5F3B18"/>
-                        </radialGradient>
-                    </defs>
-                    <path d="M98 46 C88 24 66 20 56 29 C70 34 84 40 98 48 Z" fill="#57B84A"/>
-                    <path d="M102 46 C112 24 134 20 144 29 C130 34 116 40 102 48 Z" fill="#3E9E3A"/>
-                    <circle cx="100" cy="124" r="74" fill="url(#husk)"/>
-                    <path d="M62 66 Q48 124 62 184" stroke="#5A3714" stroke-width="5" fill="none" opacity=".4"/>
-                    <path d="M138 66 Q152 124 138 184" stroke="#5A3714" stroke-width="5" fill="none" opacity=".4"/>
-                    <circle cx="86" cy="68" r="6" fill="#402508"/>
-                    <circle cx="108" cy="64" r="6" fill="#402508"/>
-                    <circle cx="97" cy="81" r="6" fill="#402508"/>
-                    <ellipse cx="76" cy="126" rx="13" ry="15" fill="#FFFFFF"/>
-                    <ellipse cx="124" cy="126" rx="13" ry="15" fill="#FFFFFF"/>
-                    <circle cx="79" cy="129" r="6" fill="#2B1B08"/>
-                    <circle cx="121" cy="129" r="6" fill="#2B1B08"/>
-                    <ellipse cx="58" cy="150" rx="9" ry="6" fill="#E8985A" opacity=".7"/>
-                    <ellipse cx="142" cy="150" rx="9" ry="6" fill="#E8985A" opacity=".7"/>
-                    <path d="M84 152 Q100 166 116 152" stroke="#2B1B08" stroke-width="6" fill="none" stroke-linecap="round"/>
-                </svg>
-            </div>
-            <div class="who">椰子的</div>
-            <div class="game-name">咯咯哒！憋不住啦！</div>
-            <span class="go">点我开始</span>
-        </a>
+        <!-- ===== 第一层：选人 ===== -->
+        <section id="role-layer" class="layer active">
+            <button class="panel yezi" type="button" onclick="openGames('yezi')" aria-label="椰子的游戏架">
+                <div class="scene">
+                    <div class="grass"></div>
+                    <!-- 母鸡和蛋装饰 -->
+                    <svg class="deco-hen" viewBox="0 0 120 110" aria-hidden="true">
+                        <path d="M22 62 Q6 46 16 32 Q24 46 32 52 Z" fill="#F3EEE2" stroke="#E0D9C8" stroke-width="2"/>
+                        <ellipse cx="60" cy="70" rx="42" ry="32" fill="#FFFFFF" stroke="#E5E0D5" stroke-width="3"/>
+                        <circle cx="56" cy="30" r="6" fill="#E23B3B"/>
+                        <circle cx="66" cy="26" r="7" fill="#E23B3B"/>
+                        <circle cx="76" cy="31" r="6" fill="#E23B3B"/>
+                        <path d="M94 60 L112 66 L94 72 Z" fill="#F5A623"/>
+                        <circle cx="86" cy="54" r="4" fill="#333333"/>
+                        <ellipse cx="36" cy="100" rx="11" ry="14" fill="#FFE9B8" stroke="#E8C87E" stroke-width="3"/>
+                    </svg>
+                    <!-- 椰子主角 -->
+                    <svg class="hero coconut" viewBox="0 0 200 210" aria-hidden="true">
+                        <defs>
+                            <radialGradient id="husk" cx="38%" cy="30%" r="78%">
+                                <stop offset="0%" stop-color="#B07A42"/>
+                                <stop offset="55%" stop-color="#8B5A2B"/>
+                                <stop offset="100%" stop-color="#5F3B18"/>
+                            </radialGradient>
+                        </defs>
+                        <path d="M98 46 C88 24 66 20 56 29 C70 34 84 40 98 48 Z" fill="#57B84A"/>
+                        <path d="M102 46 C112 24 134 20 144 29 C130 34 116 40 102 48 Z" fill="#3E9E3A"/>
+                        <circle cx="100" cy="124" r="74" fill="url(#husk)"/>
+                        <path d="M62 66 Q48 124 62 184" stroke="#5A3714" stroke-width="5" fill="none" opacity=".4"/>
+                        <path d="M138 66 Q152 124 138 184" stroke="#5A3714" stroke-width="5" fill="none" opacity=".4"/>
+                        <circle cx="86" cy="68" r="6" fill="#402508"/>
+                        <circle cx="108" cy="64" r="6" fill="#402508"/>
+                        <circle cx="97" cy="81" r="6" fill="#402508"/>
+                        <ellipse cx="76" cy="126" rx="13" ry="15" fill="#FFFFFF"/>
+                        <ellipse cx="124" cy="126" rx="13" ry="15" fill="#FFFFFF"/>
+                        <circle cx="79" cy="129" r="6" fill="#2B1B08"/>
+                        <circle cx="121" cy="129" r="6" fill="#2B1B08"/>
+                        <ellipse cx="58" cy="150" rx="9" ry="6" fill="#E8985A" opacity=".7"/>
+                        <ellipse cx="142" cy="150" rx="9" ry="6" fill="#E8985A" opacity=".7"/>
+                        <path d="M84 152 Q100 166 116 152" stroke="#2B1B08" stroke-width="6" fill="none" stroke-linecap="round"/>
+                    </svg>
+                </div>
+                <div class="who">椰子的</div>
+                <div class="game-name">有 2 个游戏在等你</div>
+                <span class="go">进来挑一个</span>
+            </button>
 
-        <!-- ===== 可乐：高铁数学 ===== -->
-        <a class="panel kele" href="./kele_high_speed_train_math.html" aria-label="可乐的游戏：可乐的小小高铁数学探险">
-            <div class="scene">
-                <!-- 可乐罐主角 -->
-                <svg class="hero cola-can" viewBox="0 0 200 220" aria-hidden="true">
-                    <defs>
-                        <linearGradient id="canBody" x1="0" y1="0" x2="1" y2="0">
-                            <stop offset="0%" stop-color="#C41E1E"/>
-                            <stop offset="45%" stop-color="#F03A3A"/>
-                            <stop offset="100%" stop-color="#A91212"/>
-                        </linearGradient>
-                    </defs>
-                    <circle class="bub" cx="152" cy="118" r="5" fill="#FFFFFF" opacity=".8"/>
-                    <circle class="bub b2" cx="162" cy="92" r="4" fill="#FFFFFF" opacity=".7"/>
-                    <circle class="bub b3" cx="148" cy="66" r="3.5" fill="#FFFFFF" opacity=".6"/>
-                    <path d="M62 64 h76 v112 q0 16 -14 16 h-48 q-14 0 -14 -16 z" fill="url(#canBody)"/>
-                    <ellipse cx="100" cy="60" rx="40" ry="11" fill="#D9DDE2"/>
-                    <ellipse cx="100" cy="56" rx="40" ry="11" fill="#EFF2F5"/>
-                    <circle cx="100" cy="52" r="7" fill="none" stroke="#98A0A8" stroke-width="4"/>
-                    <path d="M62 92 Q100 80 138 92 L138 112 Q100 100 62 112 Z" fill="#FFFFFF" opacity=".95"/>
-                    <circle cx="100" cy="146" r="27" fill="#FFF6E8"/>
-                    <circle cx="91" cy="142" r="4" fill="#5A3A1A"/>
-                    <circle cx="109" cy="142" r="4" fill="#5A3A1A"/>
-                    <path d="M88 152 Q100 163 112 152" stroke="#5A3A1A" stroke-width="4.5" fill="none" stroke-linecap="round"/>
-                    <rect x="72" y="76" width="9" height="94" rx="4.5" fill="#FFFFFF" opacity=".28"/>
-                </svg>
-                <!-- 高铁装饰 -->
-                <svg class="deco-train" viewBox="0 0 260 122" aria-hidden="true">
-                    <g class="zoomline" fill="#B9CFF0">
-                        <rect x="0" y="50" width="26" height="6" rx="3"/>
-                        <rect x="0" y="66" width="40" height="6" rx="3"/>
-                        <rect x="0" y="82" width="18" height="6" rx="3"/>
-                    </g>
-                    <path d="M14 98 L14 62 Q14 40 42 36 L150 36 Q208 42 240 74 Q248 82 244 92 Q240 100 226 100 L28 100 Q14 100 14 98 Z"
-                          fill="#F7FAFF" stroke="#24457C" stroke-width="4"/>
-                    <rect x="14" y="82" width="226" height="9" fill="#2F6FBF"/>
-                    <rect x="36" y="48" width="18" height="17" rx="5" fill="#9CC4E8"/>
-                    <rect x="62" y="46" width="18" height="17" rx="5" fill="#9CC4E8"/>
-                    <rect x="88" y="45" width="18" height="17" rx="5" fill="#9CC4E8"/>
-                    <path d="M178 52 Q208 58 226 76 L190 76 Q180 76 178 66 Z" fill="#9CC4E8"/>
-                    <circle cx="238" cy="90" r="4" fill="#FFD34D"/>
-                    <rect x="0" y="106" width="260" height="5" rx="2.5" fill="#7C879B"/>
-                    <rect x="20" y="113" width="24" height="6" rx="2" fill="#A9B2C0"/>
-                    <rect x="120" y="113" width="24" height="6" rx="2" fill="#A9B2C0"/>
-                    <rect x="220" y="113" width="24" height="6" rx="2" fill="#A9B2C0"/>
-                </svg>
+            <button class="panel kele" type="button" onclick="openGames('kele')" aria-label="可乐的游戏架">
+                <div class="scene">
+                    <!-- 可乐罐主角 -->
+                    <svg class="hero cola-can" viewBox="0 0 200 220" aria-hidden="true">
+                        <defs>
+                            <linearGradient id="canBody" x1="0" y1="0" x2="1" y2="0">
+                                <stop offset="0%" stop-color="#C41E1E"/>
+                                <stop offset="45%" stop-color="#F03A3A"/>
+                                <stop offset="100%" stop-color="#A91212"/>
+                            </linearGradient>
+                        </defs>
+                        <circle class="bub" cx="152" cy="118" r="5" fill="#FFFFFF" opacity=".8"/>
+                        <circle class="bub b2" cx="162" cy="92" r="4" fill="#FFFFFF" opacity=".7"/>
+                        <circle class="bub b3" cx="148" cy="66" r="3.5" fill="#FFFFFF" opacity=".6"/>
+                        <path d="M62 64 h76 v112 q0 16 -14 16 h-48 q-14 0 -14 -16 z" fill="url(#canBody)"/>
+                        <ellipse cx="100" cy="60" rx="40" ry="11" fill="#D9DDE2"/>
+                        <ellipse cx="100" cy="56" rx="40" ry="11" fill="#EFF2F5"/>
+                        <circle cx="100" cy="52" r="7" fill="none" stroke="#98A0A8" stroke-width="4"/>
+                        <path d="M62 92 Q100 80 138 92 L138 112 Q100 100 62 112 Z" fill="#FFFFFF" opacity=".95"/>
+                        <circle cx="100" cy="146" r="27" fill="#FFF6E8"/>
+                        <circle cx="91" cy="142" r="4" fill="#5A3A1A"/>
+                        <circle cx="109" cy="142" r="4" fill="#5A3A1A"/>
+                        <path d="M88 152 Q100 163 112 152" stroke="#5A3A1A" stroke-width="4.5" fill="none" stroke-linecap="round"/>
+                        <rect x="72" y="76" width="9" height="94" rx="4.5" fill="#FFFFFF" opacity=".28"/>
+                    </svg>
+                    <!-- 高铁装饰 -->
+                    <svg class="deco-train" viewBox="0 0 260 122" aria-hidden="true">
+                        <g class="zoomline" fill="#B9CFF0">
+                            <rect x="0" y="50" width="26" height="6" rx="3"/>
+                            <rect x="0" y="66" width="40" height="6" rx="3"/>
+                            <rect x="0" y="82" width="18" height="6" rx="3"/>
+                        </g>
+                        <path d="M14 98 L14 62 Q14 40 42 36 L150 36 Q208 42 240 74 Q248 82 244 92 Q240 100 226 100 L28 100 Q14 100 14 98 Z"
+                              fill="#F7FAFF" stroke="#24457C" stroke-width="4"/>
+                        <rect x="14" y="82" width="226" height="9" fill="#2F6FBF"/>
+                        <rect x="36" y="48" width="18" height="17" rx="5" fill="#9CC4E8"/>
+                        <rect x="62" y="46" width="18" height="17" rx="5" fill="#9CC4E8"/>
+                        <rect x="88" y="45" width="18" height="17" rx="5" fill="#9CC4E8"/>
+                        <path d="M178 52 Q208 58 226 76 L190 76 Q180 76 178 66 Z" fill="#9CC4E8"/>
+                        <circle cx="238" cy="90" r="4" fill="#FFD34D"/>
+                        <rect x="0" y="106" width="260" height="5" rx="2.5" fill="#7C879B"/>
+                        <rect x="20" y="113" width="24" height="6" rx="2" fill="#A9B2C0"/>
+                        <rect x="120" y="113" width="24" height="6" rx="2" fill="#A9B2C0"/>
+                        <rect x="220" y="113" width="24" height="6" rx="2" fill="#A9B2C0"/>
+                    </svg>
+                </div>
+                <div class="who">可乐的</div>
+                <div class="game-name">有 2 个游戏在等你</div>
+                <span class="go">进来挑一个</span>
+            </button>
+        </section>
+
+        <!-- ===== 第二层：游戏架 ===== -->
+        <section id="games-layer" class="layer">
+            <div class="games-inner">
+                <button class="back" type="button" onclick="backToRoles()">← 返回选人</button>
+                <div class="games-head">
+                    <span class="avatar-wrap" id="games-avatar" aria-hidden="true"></span>
+                    <div>
+                        <div class="games-title" id="games-title"></div>
+                        <div class="games-sub" id="games-sub"></div>
+                    </div>
+                </div>
+                <nav id="games-list" aria-label="游戏列表"></nav>
             </div>
-            <div class="who">可乐的</div>
-            <div class="game-name">可乐的小小高铁数学探险</div>
-            <span class="go">点我开始</span>
-        </a>
+        </section>
     </main>
+
+    <script>
+        // 游戏数据：按小主人分组
+        const GAMES = {
+            yezi: {
+                name: '椰子的游戏',
+                sub: '咯咯哒和小动物们都准备好啦',
+                list: [
+                    { icon: 'hen',   title: '咯咯哒！憋不住啦！', desc: '母鸡下蛋 · 20以内加减法',     url: './code_artifact.html' },
+                    { icon: 'door',  title: '咚咚咚！谁在串门？', desc: '听声音猜动物 · 英法双语启蒙', url: './coco_2_who_knock_the_door_fr_eng.html' }
+                ]
+            },
+            kele: {
+                name: '可乐的游戏',
+                sub: '呜——车队整装待发！',
+                list: [
+                    { icon: 'train', title: '可乐的小小高铁数学探险', desc: '开高铁数乘客 · 听一听数一数', url: './kele_high_speed_train_math.html' },
+                    { icon: 'moto',  title: '可乐超能摩托车队',       desc: '骑车冲刺 · 5以内数学',        url: './cola_2_motorcycle_math_rush.html' }
+                ]
+            }
+        };
+
+        // 游戏图标（一眼看出玩法）
+        const ICONS = {
+            // 母鸡 + 金蛋：下蛋数学
+            hen: '<svg viewBox="0 0 64 64" aria-hidden="true">'
+               + '<rect x="2" y="2" width="60" height="60" rx="16" fill="#FFF0C2"/>'
+               + '<circle cx="26" cy="17" r="4.5" fill="#E23B3B"/>'
+               + '<circle cx="33" cy="14.5" r="5" fill="#E23B3B"/>'
+               + '<circle cx="40" cy="18" r="4.5" fill="#E23B3B"/>'
+               + '<circle cx="33" cy="31" r="14" fill="#FFFFFF" stroke="#E5E0D5" stroke-width="2.5"/>'
+               + '<path d="M45 29 L56 32 L45 36 Z" fill="#F5A623"/>'
+               + '<circle cx="39" cy="28" r="3" fill="#333333"/>'
+               + '<circle cx="42" cy="38" r="3.5" fill="#E86A5E"/>'
+               + '<ellipse cx="20" cy="49" rx="9" ry="11" fill="#FFE9B8" stroke="#E8C87E" stroke-width="2.5"/>'
+               + '</svg>',
+            // 木门 + 兔耳 + 敲门弧线：听声音猜动物
+            door: '<svg viewBox="0 0 64 64" aria-hidden="true">'
+               + '<rect x="2" y="2" width="60" height="60" rx="16" fill="#FFE3B8"/>'
+               + '<ellipse cx="29" cy="13" rx="4" ry="8" fill="#FFFFFF" stroke="#D9CDB8" stroke-width="2" transform="rotate(-12 29 13)"/>'
+               + '<ellipse cx="39" cy="13" rx="4" ry="8" fill="#FFFFFF" stroke="#D9CDB8" stroke-width="2" transform="rotate(10 39 13)"/>'
+               + '<rect x="19" y="16" width="28" height="38" rx="4" fill="#B4763B"/>'
+               + '<rect x="23" y="20" width="20" height="30" rx="3" fill="#D89A55"/>'
+               + '<circle cx="33" cy="30" r="5" fill="#FFF6E8"/>'
+               + '<circle cx="43" cy="36" r="2.5" fill="#6B3F12"/>'
+               + '<path d="M13 26 q-4 6 0 12" stroke="#C98A3B" stroke-width="3" fill="none" stroke-linecap="round"/>'
+               + '<path d="M8 28 q-3 4 0 8" stroke="#C98A3B" stroke-width="3" fill="none" stroke-linecap="round"/>'
+               + '</svg>',
+            // 子弹头高铁正面 + 轨道：开火车数数
+            train: '<svg viewBox="0 0 64 64" aria-hidden="true">'
+                + '<rect x="2" y="2" width="60" height="60" rx="16" fill="#D8E8FF"/>'
+                + '<rect x="8" y="52" width="48" height="4" rx="2" fill="#7C879B"/>'
+                + '<path d="M16 50 L16 26 Q16 14 32 14 Q48 14 48 26 L48 50 Z" fill="#F7FAFF" stroke="#24457C" stroke-width="3"/>'
+                + '<path d="M22 28 Q22 19 32 19 Q42 19 42 28 L42 32 Q32 36 22 32 Z" fill="#9CC4E8"/>'
+                + '<rect x="16" y="38" width="32" height="4" fill="#2F6FBF"/>'
+                + '<circle cx="22" cy="46" r="3" fill="#FFD34D"/>'
+                + '<circle cx="42" cy="46" r="3" fill="#FFD34D"/>'
+                + '</svg>',
+            // 摩托车双轮 + 车把：骑车冲刺
+            moto: '<svg viewBox="0 0 64 64" aria-hidden="true">'
+               + '<rect x="2" y="2" width="60" height="60" rx="16" fill="#FFE0E0"/>'
+               + '<rect x="4" y="24" width="8" height="3.5" rx="1.75" fill="#F2A6A6"/>'
+               + '<circle cx="17" cy="45" r="9" fill="#2B2B2B"/>'
+               + '<circle cx="17" cy="45" r="3.5" fill="#E8E8E8"/>'
+               + '<circle cx="47" cy="45" r="9" fill="#2B2B2B"/>'
+               + '<circle cx="47" cy="45" r="3.5" fill="#E8E8E8"/>'
+               + '<path d="M17 45 Q20 36 28 33 L38 33 L47 45" stroke="#DC2626" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>'
+               + '<path d="M47 45 L43 30 L48 25" stroke="#333333" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>'
+               + '<rect x="24" y="28" width="12" height="5" rx="2.5" fill="#5A2A2A"/>'
+               + '</svg>'
+        };
+
+        // 第二层标题旁的小头像
+        const AVATARS = {
+            yezi: '<svg viewBox="0 0 48 48" aria-hidden="true">'
+               + '<path d="M23 11 C20 5 13 4 10 7 C15 9 19 10 23 12 Z" fill="#57B84A"/>'
+               + '<path d="M25 11 C28 5 35 4 38 7 C33 9 29 10 25 12 Z" fill="#3E9E3A"/>'
+               + '<circle cx="24" cy="29" r="16" fill="#8B5A2B"/>'
+               + '<ellipse cx="18" cy="28" rx="4" ry="5" fill="#FFFFFF"/>'
+               + '<ellipse cx="30" cy="28" rx="4" ry="5" fill="#FFFFFF"/>'
+               + '<circle cx="19" cy="29" r="2" fill="#2B1B08"/>'
+               + '<circle cx="29" cy="29" r="2" fill="#2B1B08"/>'
+               + '<path d="M18 36 Q24 41 30 36" stroke="#2B1B08" stroke-width="2.5" fill="none" stroke-linecap="round"/>'
+               + '</svg>',
+            kele: '<svg viewBox="0 0 48 48" aria-hidden="true">'
+               + '<path d="M14 13 h20 v25 q0 5 -4.5 5 h-11 q-4.5 0 -4.5 -5 z" fill="#DC2626"/>'
+               + '<ellipse cx="24" cy="12" rx="11" ry="4" fill="#D9DDE2"/>'
+               + '<path d="M14 23 Q24 19 34 23 L34 29 Q24 25 14 29 Z" fill="#FFFFFF" opacity=".95"/>'
+               + '<circle cx="24" cy="35" r="7" fill="#FFF6E8"/>'
+               + '<circle cx="21.5" cy="34" r="1.3" fill="#5A3A1A"/>'
+               + '<circle cx="26.5" cy="34" r="1.3" fill="#5A3A1A"/>'
+               + '<path d="M21 37 Q24 40 27 37" stroke="#5A3A1A" stroke-width="1.8" fill="none" stroke-linecap="round"/>'
+               + '</svg>'
+        };
+
+        const ARROW = '<svg viewBox="0 0 24 24" aria-hidden="true">'
+                    + '<path d="M9 5 L16 12 L9 19" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>'
+                    + '</svg>';
+
+        const roleLayer = document.getElementById('role-layer');
+        const gamesLayer = document.getElementById('games-layer');
+        const gamesAvatar = document.getElementById('games-avatar');
+        const gamesTitle = document.getElementById('games-title');
+        const gamesSub = document.getElementById('games-sub');
+        const gamesList = document.getElementById('games-list');
+
+        function openGames(role) {
+            const data = GAMES[role];
+            gamesLayer.className = 'layer active ' + role + '-bg';
+            gamesAvatar.innerHTML = AVATARS[role];
+            gamesTitle.textContent = data.name;
+            gamesSub.textContent = data.sub;
+            gamesList.innerHTML = data.list.map(function (g) {
+                return '<a class="game-card" href="' + g.url + '">'
+                     + '<span class="g-icon">' + ICONS[g.icon] + '</span>'
+                     + '<span class="g-text"><span class="g-title">' + g.title + '</span>'
+                     + '<span class="g-desc">' + g.desc + '</span></span>'
+                     + '<span class="g-arrow">' + ARROW + '</span>'
+                     + '</a>';
+            }).join('');
+            roleLayer.classList.remove('active');
+            window.scrollTo(0, 0);
+        }
+
+        function backToRoles() {
+            gamesLayer.classList.remove('active');
+            roleLayer.classList.add('active');
+            window.scrollTo(0, 0);
+        }
+    </script>
 </body>
 </html>
