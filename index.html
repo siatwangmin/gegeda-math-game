@@ -247,6 +247,7 @@
             animation: cardIn .32s ease backwards;
         }
         .game-card:nth-child(2) { animation-delay: .08s; }
+        .game-card:nth-child(3) { animation-delay: .16s; }
 
         @keyframes cardIn {
             from { opacity: 0; transform: translateY(14px); }
@@ -368,7 +369,7 @@
                     </svg>
                 </div>
                 <div class="who">椰子的</div>
-                <div class="game-name">有 2 个游戏在等你</div>
+                <div class="game-name">有 3 个游戏在等你</div>
                 <span class="go">进来挑一个</span>
             </button>
 
@@ -448,7 +449,8 @@
                 sub: '咯咯哒和小动物们都准备好啦',
                 list: [
                     { icon: 'hen',   title: '咯咯哒！憋不住啦！', desc: '母鸡下蛋 · 20以内加减法',     url: './code_artifact.html' },
-                    { icon: 'door',  title: '咚咚咚！谁在串门？', desc: '听声音猜动物 · 英法双语启蒙', url: './coco_2_who_knock_the_door_fr_eng.html' }
+                    { icon: 'door',  title: '咚咚咚！谁在串门？', desc: '听声音猜动物 · 英法双语启蒙', url: './coco_2_who_knock_the_door_fr_eng.html' },
+                    { icon: 'shoe',  title: '臭鞋大炮与搞怪医生', desc: '扔臭鞋打怪兽 · 识字大冒险',     url: './coco_3_pinyin.html' }
                 ]
             },
             kele: {
@@ -486,6 +488,16 @@
                + '<circle cx="43" cy="36" r="2.5" fill="#6B3F12"/>'
                + '<path d="M13 26 q-4 6 0 12" stroke="#C98A3B" stroke-width="3" fill="none" stroke-linecap="round"/>'
                + '<path d="M8 28 q-3 4 0 8" stroke="#C98A3B" stroke-width="3" fill="none" stroke-linecap="round"/>'
+               + '</svg>',
+            // 臭鞋 + 臭气线：扔臭鞋打怪兽识字
+            shoe: '<svg viewBox="0 0 64 64" aria-hidden="true">'
+               + '<rect x="2" y="2" width="60" height="60" rx="16" fill="#FFE9C8"/>'
+               + '<path d="M44 12 q4 4 0 8" stroke="#7BB661" stroke-width="3" fill="none" stroke-linecap="round"/>'
+               + '<path d="M51 16 q3 3 0 6" stroke="#7BB661" stroke-width="3" fill="none" stroke-linecap="round"/>'
+               + '<path d="M38 17 q3 3 0 6" stroke="#7BB661" stroke-width="3" fill="none" stroke-linecap="round"/>'
+               + '<path d="M12 46 L12 36 Q12 26 22 26 Q28 26 32 31 Q37 37 45 38 Q52 39 52 46 Z" fill="#8B5CC9"/>'
+               + '<path d="M20 32 L26 36 M24 29 L30 33" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round"/>'
+               + '<rect x="10" y="46" width="44" height="7" rx="3.5" fill="#4A3A78"/>'
                + '</svg>',
             // 子弹头高铁正面 + 轨道：开火车数数
             train: '<svg viewBox="0 0 64 64" aria-hidden="true">'

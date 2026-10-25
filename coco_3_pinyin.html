@@ -1,0 +1,1221 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>《臭鞋大炮与搞怪医生》- 椰子的爆笑识字大冒险</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/canvas-confetti/1.6.0/confetti.browser.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&family=Fredoka+One&display=swap" rel="stylesheet">
+    
+    <style>
+        * {
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'ZCOOL KuaiLe', cursive, 'Fredoka One', sans-serif;
+            background: linear-gradient(180deg, #A8EDEA 0%, #FED6E3 100%);
+            min-height: 100vh;
+            margin: 0;
+            padding: 0;
+            touch-action: manipulation;
+            overflow-x: hidden;
+        }
+        /* Chunky 3D playful buttons */
+        .btn-chubby {
+            box-shadow: 0 6px 0 rgba(0,0,0,0.18), 0 10px 15px rgba(0,0,0,0.12);
+            transition: transform 0.08s ease, box-shadow 0.08s ease;
+        }
+        .btn-chubby:active {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 rgba(0,0,0,0.18), 0 4px 6px rgba(0,0,0,0.12);
+        }
+        /* Flying Stinky Shoe Keyframe Animation */
+        @keyframes flyShoe {
+            0% {
+                transform: translate(0, 0) rotate(0deg) scale(0.6);
+                opacity: 0;
+            }
+            15% {
+                opacity: 1;
+                transform: translate(60px, -70px) rotate(180deg) scale(1.1);
+            }
+            50% {
+                transform: translate(180px, -110px) rotate(420deg) scale(1.3);
+            }
+            85% {
+                transform: translate(290px, -20px) rotate(700deg) scale(1.2);
+            }
+            100% {
+                transform: translate(320px, 10px) rotate(740deg) scale(1.4);
+                opacity: 1;
+            }
+        }
+        .anim-fly-shoe {
+            animation: flyShoe 0.75s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+        }
+        /* Monster dizzy wobble */
+        @keyframes monsterWobble {
+            0%, 100% { transform: rotate(0deg) scale(1); }
+            20% { transform: rotate(-8deg) scale(0.95); }
+            40% { transform: rotate(8deg) scale(1.05); }
+            60% { transform: rotate(-6deg); }
+            80% { transform: rotate(4deg); }
+        }
+        .anim-dizzy {
+            animation: monsterWobble 0.8s ease-in-out;
+        }
+        /* Syringe Poke / Needle Poke Attack */
+        @keyframes needlePoke {
+            0% { transform: translate(60px, 0) rotate(-15deg); opacity: 0; }
+            30% { transform: translate(10px, -10px) rotate(-10deg); opacity: 1; }
+            60% { transform: translate(-45px, 15px) rotate(-5deg) scale(1.15); }
+            80% { transform: translate(-30px, 5px) rotate(-10deg); }
+            100% { transform: translate(0, 0) rotate(0deg); opacity: 1; }
+        }
+        .anim-needle-poke {
+            animation: needlePoke 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+        /* Stamp animation */
+        @keyframes popStamp {
+            0% { transform: scale(0.3); opacity: 0; }
+            70% { transform: scale(1.15); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .anim-stamp {
+            animation: popStamp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+        /* Shoe wobble & pop */
+        @keyframes shoeHop {
+            0%, 100% { transform: translateY(0) rotate(-5deg) scale(1); }
+            50% { transform: translateY(-12px) rotate(5deg) scale(1.08); }
+        }
+        .anim-shoe-hop {
+            animation: shoeHop 0.9s ease-in-out infinite;
+        }
+        /* Monster pop out of shoe */
+        @keyframes monsterEmerge {
+            0% { transform: scale(0.2) translateY(50px); opacity: 0; }
+            60% { transform: scale(1.25) translateY(-15px); opacity: 1; }
+            100% { transform: scale(1) translateY(0); opacity: 1; }
+        }
+        .anim-emerge {
+            animation: monsterEmerge 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+        /* Gentle floating */
+        @keyframes floatIdle {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-6px); }
+        }
+        .anim-float {
+            animation: floatIdle 2.5s ease-in-out infinite;
+        }
+        /* 返回游戏大厅悬浮按钮 */
+        .back-home {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 7px 14px 7px 10px;
+            background: rgba(255, 255, 255, .95);
+            border: 3px solid #F59E0B;
+            border-radius: 999px;
+            color: #7A4A12;
+            font-weight: 900;
+            font-size: 15px;
+            text-decoration: none;
+            box-shadow: 0 4px 0 rgba(0, 0, 0, .18);
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+        .back-home:active { transform: translateY(2px); box-shadow: 0 2px 0 rgba(0, 0, 0, .18); }
+        .back-home svg { width: 18px; height: 18px; display: block; }
+        body { padding-top: 58px !important; }
+    </style>
+</head>
+<body class="flex flex-col items-center justify-between min-h-screen p-2 md:p-4">
+
+    <!-- 返回游戏大厅 -->
+    <a class="back-home" href="./index.html" aria-label="返回游戏大厅">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5 L8 12 L15 19" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span>返回</span>
+    </a>
+
+    <!-- Top Navigation Header -->
+    <header class="w-full max-w-xl flex items-center justify-between mb-2 z-20">
+        <!-- Coconut Badge -->
+        <div class="flex items-center gap-2">
+            <div class="bg-amber-100 border-3 border-amber-500 rounded-full px-3.5 py-1.5 shadow flex items-center gap-1.5">
+                <span class="text-2xl">🥥</span>
+                <span class="text-amber-950 font-black text-sm md:text-base">椰子大队长</span>
+            </div>
+            <!-- Smelly Shoe Count -->
+            <div class="bg-emerald-100 border-3 border-emerald-500 rounded-full px-3 py-1.5 shadow flex items-center gap-1 text-xs md:text-sm font-black text-emerald-950">
+                <span>👟 扔中臭鞋:</span>
+                <span id="shoe-count" class="text-emerald-700 text-lg font-black">0</span>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-2">
+            <!-- Audio Toggle -->
+            <button id="btn-sound" class="w-10 h-10 bg-yellow-300 hover:bg-yellow-400 border-2 border-yellow-600 rounded-full flex items-center justify-center text-xl shadow btn-chubby">
+                🔊
+            </button>
+            <!-- Shoe Museum Modal Trigger -->
+            <button id="btn-open-closet" class="bg-gradient-to-r from-purple-500 to-pink-500 text-white font-black px-3.5 py-1.5 border-2 border-purple-800 rounded-full shadow flex items-center gap-1.5 btn-chubby text-xs md:text-sm">
+                <span>🧦</span>
+                <span>臭鞋陈列馆</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Game Arena -->
+    <main class="w-full max-w-xl flex flex-col items-center gap-3 z-10 flex-grow">
+        
+        <!-- Battle Stage: Coconut Cannon (Left) vs Pi-Pi Monster (Right) -->
+        <div class="w-full bg-white/90 border-4 border-amber-400 rounded-3xl p-3 md:p-4 shadow-xl relative min-h-[200px] md:min-h-[220px] flex items-center justify-between overflow-hidden">
+            
+            <!-- Left: Coconut's Smelly Shoe Cannon -->
+            <div class="flex flex-col items-center relative z-10">
+                <div class="w-20 h-20 md:w-24 md:h-24 bg-amber-100 rounded-2xl border-3 border-amber-600 shadow-md flex items-center justify-center relative anim-float">
+                    <!-- Cannon Barrel -->
+                    <div class="absolute -right-3 top-6 w-8 h-8 bg-slate-700 rounded-r-lg border-2 border-slate-900 transform rotate-12 flex items-center justify-end pr-1">
+                        <span class="text-xs">💨</span>
+                    </div>
+                    <!-- Coconut Avatar Emoji -->
+                    <span class="text-4xl md:text-5xl">🥥</span>
+                    <!-- Stinky Shoe in Cannon ready to launch -->
+                    <span id="ready-shoe-icon" class="absolute -bottom-1 -right-1 text-2xl">👟</span>
+                </div>
+                <div class="bg-amber-400 text-amber-950 font-black text-xs px-2.5 py-0.5 rounded-full border border-amber-600 shadow mt-1">
+                    椰子的臭鞋大炮
+                </div>
+            </div>
+
+            <!-- Animated Projectile Area -->
+            <div id="projectile-layer" class="absolute inset-0 pointer-events-none z-20 overflow-hidden">
+                <!-- Stinky Flying Shoe (hidden by default) -->
+                <div id="flying-shoe" class="hidden absolute top-20 left-16 text-5xl filter drop-shadow-lg">
+                    <div class="relative">
+                        <span id="flying-shoe-emoji">👟</span>
+                        <span class="absolute -top-3 -right-2 text-xl text-green-500 animate-pulse">♨️</span>
+                    </div>
+                </div>
+
+                <!-- Doctor Monster's Giant Needle (hidden by default) -->
+                <div id="poking-needle" class="hidden absolute top-16 right-24 text-6xl filter drop-shadow-xl">
+                    💉
+                </div>
+            </div>
+
+            <!-- Center Comic Sound Bubble -->
+            <div class="flex-grow flex items-center justify-center px-1 z-10">
+                <div id="battle-speech-bubble" class="bg-yellow-200 border-2 border-yellow-600 px-3 py-1.5 rounded-2xl shadow-md text-center max-w-[170px]">
+                    <span id="battle-speech-text" class="text-xs md:text-sm font-black text-amber-950 leading-tight block">
+                        皮皮怪戴着听诊器来啦！
+                    </span>
+                </div>
+            </div>
+
+            <!-- Right: Pi-Pi Monster / Doctor Monster -->
+            <div class="flex flex-col items-center relative z-10">
+                <div id="monster-wrapper" class="w-20 h-20 md:w-24 md:h-24 bg-rose-100 rounded-2xl border-3 border-rose-500 shadow-md flex items-center justify-center relative">
+                    <!-- Monster Face -->
+                    <span id="monster-avatar" class="text-4xl md:text-5xl transition-transform">👾</span>
+                    <!-- Doctor Hat or Syringe Badge -->
+                    <span id="monster-accessory" class="absolute -top-2 -right-1 text-2xl">🩺</span>
+                    <!-- Shoe Sticking to Monster's Face when hit! -->
+                    <div id="monster-shoe-splat" class="hidden absolute inset-0 bg-yellow-200/90 rounded-2xl flex flex-col items-center justify-center z-30">
+                        <span id="splatted-shoe" class="text-4xl">👟</span>
+                        <span class="text-[10px] font-black text-rose-700 bg-white px-1 rounded border">糊脸啦！</span>
+                    </div>
+                </div>
+                <div id="monster-name-tag" class="bg-rose-400 text-white font-black text-xs px-2.5 py-0.5 rounded-full border border-rose-600 shadow mt-1">
+                    搞怪皮皮医生
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. Big Target Character Prompt Card -->
+        <div class="w-full bg-white border-4 border-yellow-400 rounded-3xl p-3 md:p-4 shadow-lg text-center relative">
+            <div class="flex justify-between items-center mb-1">
+                <div class="bg-amber-300 border-2 border-amber-600 px-3 py-0.5 rounded-full text-amber-950 font-black text-xs md:text-sm shadow flex items-center gap-1">
+                    <span>🎯</span>
+                    <span id="word-category">生活生动象形字</span>
+                </div>
+                
+                <!-- Re-read Word Speech Button -->
+                <button id="btn-speak-again" class="bg-rose-500 hover:bg-rose-600 text-white text-xs md:text-sm font-black px-3 py-1 rounded-full border-2 border-rose-800 shadow btn-chubby flex items-center gap-1 active:scale-95">
+                    <span>📢</span>
+                    <span>再读一遍字音</span>
+                </button>
+            </div>
+
+            <!-- Big Chinese Character Display -->
+            <div class="flex flex-col items-center justify-center py-2">
+                <!-- Interactive Pinyin & Phonics Spelling Bar (Pure Standard Pinyin) -->
+                <div class="flex flex-col items-center mb-1">
+                    <!-- Breakdown interactive buttons - Strictly Standard Pinyin Letters Only -->
+                    <div class="flex items-center gap-1.5 bg-purple-50 border-2 border-purple-300 rounded-2xl px-3 py-1 shadow-sm">
+                        <span class="text-xs font-black text-purple-700 mr-1">拼读小火车:</span>
+                        
+                        <!-- Initial (声母) -->
+                        <button id="pinyin-initial-btn" class="bg-indigo-500 hover:bg-indigo-600 active:scale-95 text-white font-black text-sm md:text-base px-2.5 py-0.5 rounded-xl border border-indigo-700 shadow-sm transition-transform flex items-center gap-0.5" title="点击听声母发音">
+                            <span class="text-[10px] text-indigo-200">声母</span>
+                            <span id="pinyin-initial-text" class="font-mono text-base font-extrabold">ch</span>
+                            <span class="text-[10px] opacity-75">🔊</span>
+                        </button>
+                        
+                        <span class="text-purple-400 font-black text-sm">+</span>
+                        
+                        <!-- Final with Tone (韵母) -->
+                        <button id="pinyin-final-btn" class="bg-pink-500 hover:bg-pink-600 active:scale-95 text-white font-black text-sm md:text-base px-2.5 py-0.5 rounded-xl border border-pink-700 shadow-sm transition-transform flex items-center gap-0.5" title="点击听韵母发音">
+                            <span class="text-[10px] text-pink-200">韵母</span>
+                            <span id="pinyin-final-text" class="font-mono text-base font-extrabold">òu</span>
+                            <span class="text-[10px] opacity-75">🔊</span>
+                        </button>
+                        
+                        <span class="text-purple-400 font-black text-sm">=</span>
+                        
+                        <!-- Full Whole Pinyin Word (整体音节) -->
+                        <button id="pinyin-full-btn" class="bg-purple-600 hover:bg-purple-700 active:scale-95 text-white font-black text-base md:text-lg px-3 py-0.5 rounded-xl border-2 border-purple-800 shadow transition-transform flex items-center gap-1" title="点击听完整拼读">
+                            <span id="target-pinyin" class="font-mono font-extrabold tracking-wide">chòu</span>
+                            <span class="text-xs">📢</span>
+                        </button>
+                    </div>
+
+                    <!-- Phonics Step by Step Coach Button -->
+                    <button id="btn-teach-phonics" class="mt-1 bg-amber-400 hover:bg-amber-500 text-amber-950 text-xs font-black px-3 py-0.5 rounded-full border border-amber-600 shadow-sm flex items-center gap-1 active:scale-95 transition-all">
+                        <span>🗣️</span>
+                        <span id="phonics-guide-label">教椰子标准两拼法（前音轻短后音重）</span>
+                    </button>
+                </div>
+                
+                <div class="relative inline-block">
+                    <span id="target-char" class="text-7xl md:text-8xl text-amber-950 font-black tracking-widest drop-shadow-sm select-none">
+                        臭
+                    </span>
+                    <!-- Cute Animated Character Badge -->
+                    <span id="char-icon-deco" class="absolute -top-3 -right-6 text-3xl">🧦</span>
+                </div>
+
+                <!-- Story / Meaning Clue for Pre-literate Kids -->
+                <p id="target-hint" class="text-xs md:text-sm font-black text-amber-900 bg-amber-100 border border-amber-300 rounded-xl px-3 py-1 mt-2 inline-block">
+                    “自”己的鼻子在闻“犬”（小狗），味道好刺鼻，真是【臭】！
+                </p>
+            </div>
+        </div>
+
+        <!-- 3. Choice Cards: Big Pictures & Words (Designed for 5-6 Year Old Hands) -->
+        <div class="w-full">
+            <div class="text-center text-xs md:text-sm font-black text-amber-950 mb-2 flex items-center justify-center gap-1">
+                <span>👇</span>
+                <span>戳一戳正确的字（答对飞臭鞋，答错打针针）：</span>
+            </div>
+
+            <!-- 3 Large candidate cards dynamically rendered by JS -->
+            <div id="choices-container" class="grid grid-cols-3 gap-2.5 md:gap-3 w-full">
+                <!-- Dynamically populated -->
+            </div>
+        </div>
+
+        <!-- 4. Next Word / Skip Auxiliary Row -->
+        <div class="w-full flex justify-between items-center px-1">
+            <button id="btn-parent-tickle" class="bg-pink-400 hover:bg-pink-500 text-white font-black text-xs md:text-sm px-3.5 py-1.5 rounded-full border-2 border-pink-700 shadow btn-chubby flex items-center gap-1">
+                <span>👉</span>
+                <span>爸爸专属：挠椰子痒痒</span>
+            </button>
+            
+            <button id="btn-next-word" class="bg-emerald-500 hover:bg-emerald-600 text-white font-black text-xs md:text-sm px-4 py-2 rounded-full border-2 border-emerald-700 shadow btn-chubby flex items-center gap-1 active:scale-95">
+                <span>下一个字</span>
+                <span>👉</span>
+            </button>
+        </div>
+    </main>
+
+    <!-- Success Splat Banner / Needle Poke Toast Overlay -->
+    <div id="reaction-stamp-box" class="fixed inset-0 bg-black/30 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4 pointer-events-none">
+        <div id="reaction-stamp-content" class="bg-gradient-to-r from-emerald-500 to-green-600 border-4 border-white text-white px-6 py-4 rounded-3xl font-black text-2xl shadow-2xl anim-stamp flex flex-col items-center gap-2 max-w-xs text-center">
+            <span id="reaction-stamp-icon" class="text-6xl">👟💥</span>
+            <span id="reaction-stamp-title">臭鞋命中皮皮怪！</span>
+            <span id="reaction-stamp-desc" class="text-sm text-yellow-100 font-bold">皮皮怪被臭晕啦！哈哈哈哈！</span>
+        </div>
+    </div>
+
+    <!-- NEW: Interactive Mystery Stinky Shoe Opening Modal (点开臭鞋子，跳出好笑臭怪兽！) -->
+    <div id="shoe-crack-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-gradient-to-b from-yellow-100 via-amber-50 to-orange-100 border-8 border-amber-500 rounded-3xl p-5 max-w-sm w-full text-center shadow-2xl relative flex flex-col items-center">
+            
+            <h3 id="modal-title" class="text-2xl font-black text-amber-950 mb-1">
+                👟 臭鞋大炮命中目标！
+            </h3>
+            <p id="modal-subtitle" class="text-xs md:text-sm text-amber-800 font-bold mb-3">
+                这只臭鞋在咕噜咕噜抖动！快用小手指戳开它！👇
+            </p>
+
+            <!-- Tappable Mysterious Smelly Shoe Container -->
+            <div id="tap-shoe-target" class="w-44 h-44 my-2 flex flex-col items-center justify-center cursor-pointer select-none relative">
+                <!-- Shoe before opening -->
+                <div id="shoe-unopened-view" class="flex flex-col items-center justify-center anim-shoe-hop">
+                    <div class="text-8xl relative filter drop-shadow-xl">
+                        <span id="modal-shoe-emoji">🧦</span>
+                        <span class="absolute -top-3 -right-2 text-3xl animate-bounce">♨️</span>
+                        <span class="absolute -bottom-2 -left-2 text-2xl animate-pulse">💨</span>
+                    </div>
+                    <div class="bg-yellow-300 border-2 border-yellow-600 text-yellow-950 text-xs font-black px-3 py-1 rounded-full shadow-md mt-2 animate-bounce">
+                        👉 点我戳开臭鞋！👈
+                    </div>
+                </div>
+
+                <!-- Revealed Funny Stinky Monster -->
+                <div id="shoe-monster-view" class="hidden flex flex-col items-center justify-center anim-emerge">
+                    <div class="text-8xl relative filter drop-shadow-2xl">
+                        <span id="revealed-monster-avatar">🧌</span>
+                        <span class="absolute -top-3 -right-3 text-3xl animate-spin">💫</span>
+                    </div>
+                    <div id="revealed-monster-name" class="text-lg font-black text-rose-700 bg-white/95 px-3 py-0.5 rounded-full border-2 border-rose-500 shadow mt-2">
+                        大蒜鼻涕怪
+                    </div>
+                </div>
+            </div>
+
+            <!-- Monster's funny quote & voice lines -->
+            <div id="monster-dialogue-card" class="hidden w-full bg-amber-200/90 border-2 border-amber-500 rounded-2xl p-2.5 mt-2 shadow-inner">
+                <p id="monster-funny-quote" class="text-xs md:text-sm font-black text-amber-950 leading-relaxed">
+                    “哇哈哈哈！三年没洗的袜子真是香喷喷！我是从臭鞋里钻出来的大蒜鼻涕怪！”
+                </p>
+                <div class="flex justify-center gap-2 mt-2">
+                    <button id="btn-replay-monster-voice" class="bg-amber-400 hover:bg-amber-500 text-amber-950 text-xs font-black px-3 py-1 rounded-xl border border-amber-600 shadow btn-chubby flex items-center gap-1">
+                        <span>📢</span>
+                        <span>再听臭怪兽说话</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Continue Button -->
+            <button id="btn-modal-next-round" class="hidden w-full bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white font-black text-lg py-2.5 rounded-2xl border-3 border-emerald-800 shadow-lg btn-chubby mt-3 active:scale-95">
+                好玩！去下一关 👉
+            </button>
+        </div>
+    </div>
+
+    <!-- Shoe Collection Closet Modal (臭鞋陈列馆) -->
+    <div id="closet-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-gradient-to-b from-amber-50 to-orange-100 border-8 border-amber-500 rounded-3xl p-5 max-w-md w-full shadow-2xl relative max-h-[85vh] flex flex-col">
+            <div class="flex justify-between items-center mb-2">
+                <h2 class="text-xl md:text-2xl font-black text-amber-950 flex items-center gap-2">
+                    <span>🧦</span>
+                    <span>椰子的超级臭鞋陈列馆</span>
+                </h2>
+                <button id="btn-close-closet" class="w-9 h-9 bg-rose-500 text-white font-black text-lg rounded-full border-2 border-rose-700 shadow">
+                    ✕
+                </button>
+            </div>
+            
+            <p class="text-xs text-amber-800 mb-2 font-bold">
+                每认对汉字，就能把不同风味的超级臭鞋收入陈列馆！点击可试射臭味：
+            </p>
+
+            <!-- Shoe Grid -->
+            <div id="shoe-grid" class="flex-grow overflow-y-auto grid grid-cols-3 gap-2.5 p-2 bg-white/80 rounded-2xl border-2 border-amber-300 min-h-[200px]">
+                <!-- Dynamically filled -->
+            </div>
+
+            <div class="mt-3 pt-2 border-t border-amber-300 flex justify-between items-center">
+                <span class="text-xs font-bold text-amber-900">收集进度: <span id="closet-progress" class="text-rose-600 font-black">0 / 8</span></span>
+                <button id="btn-smell-all" class="bg-gradient-to-r from-green-400 to-emerald-500 text-white font-black px-3 py-1.5 rounded-xl text-xs md:text-sm border-2 border-emerald-700 btn-chubby flex items-center gap-1">
+                    <span>💨</span>
+                    <span>连环臭味大齐放</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Toast -->
+    <div id="funny-toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-yellow-400 border-3 border-yellow-700 text-yellow-950 px-5 py-2 rounded-full font-black text-sm shadow-2xl z-40 transform translate-y-36 transition-transform duration-300 pointer-events-none flex items-center gap-2">
+        <span id="toast-icon">💨</span>
+        <span id="toast-msg">臭鞋大炮已装填！</span>
+    </div>
+
+    <script>
+        /* ========================================================
+           1. CHINESE LITERACY & PINYIN CURRICULUM
+              Strict standard pinyin phonology for preschool & grade 1:
+              - Initials (声母): Pronounced short and light (短促轻柔).
+              - Finals (韵母): Pure standard vowel sounds with precise tone markers (一声平/二声扬/三声拐弯/四声降).
+              - Standard Two-Spell Rule (两拼法):
+                “前音轻短后音重，两音相连猛一碰！”
+           ======================================================== */
+        const LITERACY_CATALOG = [
+            {
+                char: '臭',
+                pinyin: 'chòu',
+                pinyinInitial: 'ch',
+                initialPrompt: '声母 ch，翘舌短促轻发音',
+                pinyinFinal: 'òu',
+                finalPrompt: '韵母 òu，四声降调，嘴唇拢圆',
+                initialPhoneme: '蚩',      // 声母 ch 纯正呼读音
+                finalPhoneme: '怄',        // 韵母 òu (四声) 准确音素
+                syllableAudio: '臭',       // 完整音节 chòu 准确音素
+                category: '感觉趣味字',
+                emoji: '🧦',
+                desc: '自（鼻子）闻大狗，味道真是【臭】！',
+                speakPrompt: '请椰子找出——臭豆腐的【臭】！',
+                distractors: ['香', '大', '小'],
+                shoeReward: { name: '三天没洗的咸鱼袜', emoji: '🧦', smell: '臭得小猫都捂鼻子！' },
+                stinkyMonster: {
+                    name: '大蒜鼻涕怪',
+                    emoji: '🧌',
+                    funnyQuote: '哇哈哈！这只袜子酸溜溜太对胃口啦！我是大蒜鼻涕怪，专门搜集全天下最臭的鞋底！',
+                    voiceLine: '哇哈哈哈！太香了！我是大蒜鼻涕怪！被椰子的臭鞋大炮解放啦！'
+                }
+            },
+            {
+                char: '鞋',
+                pinyin: 'xié',
+                pinyinInitial: 'x',
+                initialPrompt: '声母 x，舌面轻气流',
+                pinyinFinal: 'ié',
+                finalPrompt: '韵母 ié，复韵母二声上扬',
+                initialPhoneme: '希',      // 声母 x 纯正呼读音
+                finalPhoneme: '爷',        // 韵母 ié (二声) 准确音素
+                syllableAudio: '鞋',       // 完整音节 xié 准确音素
+                category: '生活穿戴字',
+                emoji: '👟',
+                desc: '穿在脚上的大球鞋、小皮鞋的【鞋】！',
+                speakPrompt: '请椰子找出——扔给怪兽的臭【鞋】！',
+                distractors: ['袜', '衣', '帽'],
+                shoeReward: { name: '香蕉皮滑溜拖鞋', emoji: '🍌', smell: '踩上去直接滑出十米远！' },
+                stinkyMonster: {
+                    name: '滑溜溜香蕉怪',
+                    emoji: '🍌👾',
+                    funnyQuote: '嗖——！哎呀滑倒啦！我是香蕉鞋底里蹦出来的香蕉皮怪，一踩就骨碌碌翻跟头！',
+                    voiceLine: '哎呀呀！溜冰啦！我是香蕉皮滑溜怪，椰子踩到我也会滑跟头哦！'
+                }
+            },
+            {
+                char: '针',
+                pinyin: 'zhēn',
+                pinyinInitial: 'zh',
+                initialPrompt: '声母 zh，舌尖翘起顶上腭，短促轻音',
+                pinyinFinal: 'ēn',
+                finalPrompt: '韵母 ēn，前鼻韵母一声，平高舒展',
+                initialPhoneme: '知',      // 声母 zh 纯正呼读音
+                finalPhoneme: '恩',        // 韵母 ēn (一声) 准确音素
+                syllableAudio: '针',       // 完整音节 zhēn 准确音素
+                category: '日常用品字',
+                emoji: '🪡',
+                desc: '金属做的细细尖尖，医生阿姨打的【针】！',
+                speakPrompt: '请椰子找出——皮皮医生手里的【针】！',
+                distractors: ['刀', '线', '木'],
+                shoeReward: { name: '大榴莲味暴走鞋', emoji: '🍈', smell: '隔着三条街都能闻到榴莲味！' },
+                stinkyMonster: {
+                    name: '榴莲刺猬怪',
+                    emoji: '🦔🍈',
+                    funnyQuote: '头顶榴莲尖刺刺！谁敢摸我我就放榴莲臭气弹！噗——！',
+                    voiceLine: '榴莲怪闪亮登场！头顶扎扎手，肚皮软绵绵，被椰子发现了！'
+                }
+            },
+            {
+                char: '口',
+                pinyin: 'kǒu',
+                pinyinInitial: 'k',
+                initialPrompt: '声母 k，舌根送气，短促爆破',
+                pinyinFinal: 'ǒu',
+                finalPrompt: '韵母 ǒu，复韵母三声，降升转折',
+                initialPhoneme: '科',      // 声母 k 纯正呼读音
+                finalPhoneme: '偶',        // 韵母 ǒu (三声) 准确音素
+                syllableAudio: '口',       // 完整音节 kǒu 准确音素
+                category: '身体象形字',
+                emoji: '👄',
+                desc: '张开大嘴巴笑哈哈，方方正正的大【口】！',
+                speakPrompt: '请椰子找出——张开嘴巴大笑的【口】！',
+                distractors: ['日', '目', '田'],
+                shoeReward: { name: '放彩虹屁的洞洞鞋', emoji: '🩴', smell: '走一步噗一声，还会吐泡泡！' },
+                stinkyMonster: {
+                    name: '噗噗屁屁怪',
+                    emoji: '💨👻',
+                    funnyQuote: '噗——噜噜！我是藏在洞洞鞋里的屁屁怪，走一步我就吹一个大臭泡泡！',
+                    voiceLine: '噗噜噜！被踩醒了！谁在放七彩臭泡泡？原来是我屁屁怪！'
+                }
+            },
+            {
+                char: '目',
+                pinyin: 'mù',
+                pinyinInitial: 'm',
+                initialPrompt: '声母 m，双唇紧闭微震，短促鼻音',
+                pinyinFinal: 'ù',
+                finalPrompt: '韵母 ù，单韵母四声，高处有力降下',
+                initialPhoneme: '摸',      // 声母 m 纯正呼读音
+                finalPhoneme: '误',        // 韵母 ù (四声) 准确音素
+                syllableAudio: '目',       // 完整音节 mù 准确音素
+                category: '身体象形字',
+                emoji: '👀',
+                desc: '眼睛的古老名字，骨碌碌转的【目】！',
+                speakPrompt: '请椰子找出——看臭鞋飞过来的双【目】！',
+                distractors: ['日', '口', '月'],
+                shoeReward: { name: '臭豆腐高跟鞋', emoji: '👠', smell: '闻着臭，吃着……还是臭！' },
+                stinkyMonster: {
+                    name: '千眼豆腐怪',
+                    emoji: '👀🧟',
+                    funnyQuote: '我身上长了十八只大眼睛！正在偷看椰子是不是在笑呢！嘻嘻！',
+                    voiceLine: '眨眨眼！眨眨眼！我是千眼臭豆腐怪，我看到椰子今天笑得最开心！'
+                }
+            },
+            {
+                char: '水',
+                pinyin: 'shuǐ',
+                pinyinInitial: 'sh',
+                initialPrompt: '声母 sh，翘舌摩擦轻送气',
+                pinyinFinal: 'uǐ',
+                finalPrompt: '韵母 uǐ，复韵母三声，下沉后轻扬',
+                initialPhoneme: '诗',      // 声母 sh 纯正呼读音
+                finalPhoneme: '苇',        // 韵母 uǐ (三声) 准确音素
+                syllableAudio: '水',       // 完整音节 shuǐ 准确音素
+                category: '自然象形字',
+                emoji: '💧',
+                desc: '中间一条小河流，两边溅起浪花的【水】！',
+                speakPrompt: '请椰子找出——洗臭鞋用的自来【水】！',
+                distractors: ['火', '木', '山'],
+                shoeReward: { name: '洋葱大蒜溜冰鞋', emoji: '🛼', smell: '熏得皮皮怪眼泪哗哗流！' },
+                stinkyMonster: {
+                    name: '泪汪汪洋葱怪',
+                    emoji: '🧅😭',
+                    funnyQuote: '呜呜呜！洋葱味道太辣眼啦，我自己都把自己熏哭了！',
+                    voiceLine: '呜哇！大洋葱怪被椰子开盒啦！别闻我，闻我会哭鼻子的！'
+                }
+            },
+            {
+                char: '火',
+                pinyin: 'huǒ',
+                pinyinInitial: 'h',
+                initialPrompt: '声母 h，舌根摩擦，轻微出气',
+                pinyinFinal: 'uǒ',
+                finalPrompt: '韵母 uǒ，合口双元音，三声转折',
+                initialPhoneme: '喝',      // 声母 h 纯正呼读音
+                finalPhoneme: '伙',        // 韵母 uǒ (三声) 准确音素
+                syllableAudio: '火',       // 完整音节 huǒ 准确音素
+                category: '自然象形字',
+                emoji: '🔥',
+                desc: '冒起红红火苗，烤红薯很香的【火】！',
+                speakPrompt: '请椰子找出——红红火苗热腾腾的【火】！',
+                distractors: ['水', '人', '大'],
+                shoeReward: { name: '宇宙火箭臭靴子', emoji: '🥾', smell: '后坐力能飞到月球上去！' },
+                stinkyMonster: {
+                    name: '喷火小暴龙',
+                    emoji: '🦖🔥',
+                    funnyQuote: '呼啦啦！我是靴子火箭燃料！打个喷嚏能喷出一团红火球！',
+                    voiceLine: '嗷呜！靴子里的喷火暴龙蹦出来啦！屁股装了火箭，嗖的一声冲上天！'
+                }
+            },
+            {
+                char: '猫',
+                pinyin: 'māo',
+                pinyinInitial: 'm',
+                initialPrompt: '声母 m，双唇短促发声',
+                pinyinFinal: 'āo',
+                finalPrompt: '韵母 āo，复韵母一声，平高悠长',
+                initialPhoneme: '摸',      // 声母 m 纯正呼读音
+                finalPhoneme: '凹',        // 韵母 āo (一声) 准确音素
+                syllableAudio: '猫',       // 完整音节 māo 准确音素
+                category: '可爱动物字',
+                emoji: '🐱',
+                desc: '反犬旁加苗，最爱喵喵叫的小【猫】！',
+                speakPrompt: '请椰子找出——闻到臭鞋吓跑的小【猫】！',
+                distractors: ['狗', '鸟', '鱼'],
+                shoeReward: { name: '长了胡子的大猫爪鞋', emoji: '🐾', smell: '踩上去会喵呜喵呜叫！' },
+                stinkyMonster: {
+                    name: '臭爪喵星怪',
+                    emoji: '😼🧦',
+                    funnyQuote: '喵呜——！世界上最好的玩具就是老爹的臭袜子！谁也不许跟我抢！',
+                    voiceLine: '喵呜——！我是臭爪喵星怪！椰子快来挠挠我的猫耳朵！'
+                }
+            }
+        ];
+
+        /* Game State */
+        const state = {
+            soundEnabled: true,
+            score: 0,
+            currWordIndex: 0,
+            currWord: null,
+            choices: [],
+            isActionInProgress: false,
+            unlockedShoes: []
+        };
+
+        /* ========================================================
+           2. AUDIO & SOUND EFFECTS (Tone.js + Web Audio)
+           ======================================================== */
+        let synth, membraneSynth, noiseSynth;
+
+        function initAudio() {
+            try {
+                if (window.Tone && !synth) {
+                    Tone.start();
+                    synth = new Tone.PolySynth(Tone.Synth).toDestination();
+                    synth.volume.value = -6;
+
+                    membraneSynth = new Tone.MembraneSynth().toDestination();
+                    membraneSynth.volume.value = -4;
+
+                    noiseSynth = new Tone.NoiseSynth({
+                        noise: { type: "pink" },
+                        envelope: { attack: 0.005, decay: 0.15, sustain: 0 }
+                    }).toDestination();
+                    noiseSynth.volume.value = -8;
+                }
+            } catch (e) {
+                console.warn("Audio init deferred", e);
+            }
+        }
+
+        function playShoeLaunch() {
+            if (!state.soundEnabled) return;
+            initAudio();
+            const now = Tone.now();
+            membraneSynth.triggerAttackRelease("C2", "8n", now);
+            noiseSynth.triggerAttackRelease("8n", now + 0.05);
+            synth.triggerAttackRelease(["E4", "G4", "B4"], "16n", now + 0.12);
+        }
+
+        function playShoeSplat() {
+            if (!state.soundEnabled) return;
+            initAudio();
+            const now = Tone.now();
+            membraneSynth.triggerAttackRelease("F1", "4n", now, 1);
+            noiseSynth.triggerAttackRelease("16n", now + 0.02);
+            synth.triggerAttackRelease(["C3", "Db3"], "8n", now + 0.05);
+        }
+
+        function playNeedlePokeSound() {
+            if (!state.soundEnabled) return;
+            initAudio();
+            const now = Tone.now();
+            synth.triggerAttackRelease("F5", "32n", now);
+            synth.triggerAttackRelease("Ab5", "32n", now + 0.08);
+            synth.triggerAttackRelease("C6", "16n", now + 0.16);
+        }
+
+        function playFanfare() {
+            if (!state.soundEnabled) return;
+            initAudio();
+            const now = Tone.now();
+            synth.triggerAttackRelease(["C4", "E4", "G4"], "8n", now);
+            synth.triggerAttackRelease(["E4", "G4", "C5"], "8n", now + 0.12);
+            synth.triggerAttackRelease(["G4", "B4", "D5"], "8n", now + 0.24);
+            synth.triggerAttackRelease(["C5", "E5", "G5", "C6"], "4n", now + 0.36);
+        }
+
+        /* ========================================================
+           3. SPEECH SYNTHESIS ENGINE
+           ======================================================== */
+        function speakVoice(text, options = {}) {
+            if (!state.soundEnabled) return;
+            if (!('speechSynthesis' in window)) return;
+
+            try {
+                window.speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'zh-CN';
+                utterance.rate = options.rate || 0.95;
+                utterance.pitch = options.pitch || 1.25;
+
+                const voices = window.speechSynthesis.getVoices();
+                const zhVoice = voices.find(v => v.lang.includes('zh') || v.lang.includes('cmn'));
+                if (zhVoice) {
+                    utterance.voice = zhVoice;
+                }
+                window.speechSynthesis.speak(utterance);
+            } catch (err) {
+                console.warn("Speech synthesis error", err);
+            }
+        }
+
+        /* ========================================================
+           PINYIN PHONICS SYNTHESIS ENGINE
+           - Correct Initial articulation: light and short (短促轻读).
+           - Correct Final articulation: exact tone pitch (准确声调响亮发音).
+           - Standard Syllable Blending:
+             “声母... 韵母... 两音相碰... 拼出【...】！”
+           ======================================================== */
+        function pronounceInitial(item) {
+            if (!item) return;
+            // 采用声母纯正呼读发音，语速微快以体现“轻短”
+            speakVoice(`${item.initialPhoneme}`, { rate: 0.82, pitch: 1.15 });
+        }
+
+        function pronounceFinal(item) {
+            if (!item) return;
+            // 采用韵母标准带调音素发音，饱满响亮
+            speakVoice(`${item.finalPhoneme}`, { rate: 0.8, pitch: 1.25 });
+        }
+
+        function pronounceWholeSyllable(item) {
+            if (!item) return;
+            // 标准两拼合读：声母轻短 + 韵母响亮 = 拼合出的真实音节
+            speakVoice(`${item.initialPhoneme}——${item.finalPhoneme}——${item.syllableAudio}！`, { rate: 0.88, pitch: 1.2 });
+        }
+
+        function teachPinyinSpelling(item) {
+            initAudio();
+            if (!item) return;
+
+            // 步骤1：教声母（发音轻短）
+            speakVoice(`声母 ${item.pinyinInitial}，发音要轻短：${item.initialPhoneme}。`, { rate: 0.85, pitch: 1.15 });
+
+            // 步骤2：教韵母（发音饱满带声调）
+            setTimeout(() => {
+                speakVoice(`韵母 ${item.pinyinFinal}，发音要响亮：${item.finalPhoneme}。`, { rate: 0.85, pitch: 1.25 });
+            }, 1800);
+
+            // 步骤3：连贯标准两拼法相碰
+            setTimeout(() => {
+                speakVoice(`两拼法：前音轻短后音重，两音相碰猛一碰！${item.initialPhoneme}——${item.finalPhoneme}——${item.syllableAudio}！【${item.char}】！`, { rate: 0.9, pitch: 1.2 });
+            }, 3700);
+
+            showToast("🗣️", `拼读小火车：${item.pinyinInitial} + ${item.pinyinFinal} ➔ ${item.pinyin}`);
+        }
+
+        /* ========================================================
+           FULL AUTOMATIC TEACHING FLOW FOR QUESTION PROMPTS:
+           1. 报题目 (例如：“请椰子找出——臭豆腐的【臭】！”)
+           2. 读一下这个字 (例如：“【臭】！”)
+           3. 读一下声母 (例如：“声母：ch”)
+           4. 读一下韵母 (例如：“韵母：òu”)
+           5. 读一下拼好的 (例如：“ch——òu——chòu！【臭】！”)
+           ======================================================== */
+        let promptTimer1 = null;
+        let promptTimer2 = null;
+        let promptTimer3 = null;
+        let promptTimer4 = null;
+
+        function clearPromptTimers() {
+            if (promptTimer1) clearTimeout(promptTimer1);
+            if (promptTimer2) clearTimeout(promptTimer2);
+            if (promptTimer3) clearTimeout(promptTimer3);
+            if (promptTimer4) clearTimeout(promptTimer4);
+            promptTimer1 = null;
+            promptTimer2 = null;
+            promptTimer3 = null;
+            promptTimer4 = null;
+        }
+
+        function playFullQuestionNarration(item) {
+            if (!item) return;
+            clearPromptTimers();
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+            }
+
+            // 步骤1：报题目
+            speakVoice(item.speakPrompt, { rate: 0.92, pitch: 1.2 });
+
+            // 步骤2：读一下这个字
+            promptTimer1 = setTimeout(() => {
+                speakVoice(`【${item.char}】！`, { rate: 0.85, pitch: 1.25 });
+            }, 2100);
+
+            // 步骤3：读一下声母
+            promptTimer2 = setTimeout(() => {
+                speakVoice(`声母：${item.initialPhoneme}。`, { rate: 0.85, pitch: 1.15 });
+            }, 3300);
+
+            // 步骤4：读一下韵母
+            promptTimer3 = setTimeout(() => {
+                speakVoice(`韵母：${item.finalPhoneme}。`, { rate: 0.85, pitch: 1.25 });
+            }, 4600);
+
+            // 步骤5：读一下拼好的 (声母 + 韵母 = 整体拼读音节)
+            promptTimer4 = setTimeout(() => {
+                speakVoice(`${item.initialPhoneme}——${item.finalPhoneme}——${item.syllableAudio}！【${item.char}】！`, { rate: 0.88, pitch: 1.2 });
+            }, 6000);
+        }
+
+        /* ========================================================
+           4. GAMEPLAY FLOW & ROUND LOGIC
+           ======================================================== */
+        function setupRound(index) {
+            state.isActionInProgress = false;
+            state.currWordIndex = (index + LITERACY_CATALOG.length) % LITERACY_CATALOG.length;
+            const item = LITERACY_CATALOG[state.currWordIndex];
+            state.currWord = item;
+
+            // Update UI displays
+            document.getElementById('word-category').textContent = item.category;
+            document.getElementById('pinyin-initial-text').textContent = item.pinyinInitial;
+            document.getElementById('pinyin-final-text').textContent = item.pinyinFinal;
+            document.getElementById('target-pinyin').textContent = item.pinyin;
+            document.getElementById('target-char').textContent = item.char;
+            document.getElementById('char-icon-deco').textContent = item.emoji;
+            document.getElementById('target-hint').textContent = item.desc;
+            document.getElementById('ready-shoe-icon').textContent = item.shoeReward.emoji;
+            document.getElementById('flying-shoe-emoji').textContent = item.shoeReward.emoji;
+            document.getElementById('splatted-shoe').textContent = item.shoeReward.emoji;
+
+            // Reset battle arena state
+            document.getElementById('monster-shoe-splat').classList.add('hidden');
+            document.getElementById('monster-avatar').textContent = '👾';
+            document.getElementById('monster-wrapper').classList.remove('anim-dizzy');
+            document.getElementById('flying-shoe').classList.add('hidden');
+            document.getElementById('flying-shoe').classList.remove('anim-fly-shoe');
+            document.getElementById('poking-needle').classList.add('hidden');
+            document.getElementById('poking-needle').classList.remove('anim-needle-poke');
+            document.getElementById('battle-speech-text').textContent = '皮皮医生正提着大听诊器巡逻！';
+
+            // Generate 3 choices (1 correct, 2 distractors)
+            const distractors = [...item.distractors].sort(() => Math.random() - 0.5).slice(0, 2);
+            const choiceList = [
+                { char: item.char, isCorrect: true, emoji: item.emoji },
+                { char: distractors[0], isCorrect: false, emoji: '❓' },
+                { char: distractors[1], isCorrect: false, emoji: '❓' }
+            ].sort(() => Math.random() - 0.5);
+
+            state.choices = choiceList;
+            renderChoiceButtons();
+
+            // Execute full teaching & prompt sequence:
+            // 报题目 ➔ 读字 ➔ 读声母 ➔ 读韵母 ➔ 读拼好的
+            setTimeout(() => {
+                playFullQuestionNarration(item);
+            }, 300);
+        }
+
+        function renderChoiceButtons() {
+            const container = document.getElementById('choices-container');
+            container.innerHTML = '';
+
+            const cardStyles = [
+                { bg: 'from-amber-400 to-yellow-500', border: 'border-amber-600', text: 'text-amber-950' },
+                { bg: 'from-sky-400 to-blue-500', border: 'border-blue-600', text: 'text-white' },
+                { bg: 'from-emerald-400 to-teal-500', border: 'border-emerald-600', text: 'text-white' }
+            ];
+
+            state.choices.forEach((opt, idx) => {
+                const style = cardStyles[idx % cardStyles.length];
+                const btn = document.createElement('button');
+                btn.className = `bg-gradient-to-b ${style.bg} border-4 ${style.border} ${style.text} rounded-3xl p-3 flex flex-col items-center justify-center shadow-lg btn-chubby transition-transform active:scale-95 min-h-[100px] md:min-h-[120px] relative`;
+
+                btn.innerHTML = `
+                    <span class="text-5xl md:text-6xl font-black drop-shadow select-none">${opt.char}</span>
+                    <span class="text-xs font-bold mt-1 bg-white/90 text-amber-950 px-2.5 py-0.5 rounded-full border border-black/10">戳我选这个</span>
+                `;
+
+                btn.addEventListener('click', () => handleChoice(opt, btn));
+                container.appendChild(btn);
+            });
+        }
+
+        function handleChoice(option, btnElement) {
+            initAudio();
+            if (state.isActionInProgress) return;
+
+            if (option.isCorrect) {
+                triggerSmellyShoeAttack(option);
+            } else {
+                triggerTickleNeedlePunishment(option);
+            }
+        }
+
+        /* Attack: Flying Smelly Shoe onto Monster -> Modal with Monster */
+        function triggerSmellyShoeAttack(option) {
+            state.isActionInProgress = true;
+            state.score++;
+            document.getElementById('shoe-count').textContent = state.score;
+
+            // Unlock shoe reward
+            if (!state.unlockedShoes.some(s => s.name === state.currWord.shoeReward.name)) {
+                state.unlockedShoes.push({
+                    ...state.currWord.shoeReward,
+                    char: state.currWord.char,
+                    monster: state.currWord.stinkyMonster
+                });
+            }
+
+            playShoeLaunch();
+            const flyingShoe = document.getElementById('flying-shoe');
+            flyingShoe.classList.remove('hidden');
+            flyingShoe.classList.add('anim-fly-shoe');
+            document.getElementById('battle-speech-text').textContent = '嗖——！臭鞋大炮呼啸飞出！';
+
+            setTimeout(() => {
+                playShoeSplat();
+                flyingShoe.classList.add('hidden');
+                flyingShoe.classList.remove('anim-fly-shoe');
+
+                // Splat monster face
+                document.getElementById('monster-shoe-splat').classList.remove('hidden');
+                const monster = document.getElementById('monster-wrapper');
+                monster.classList.add('anim-dizzy');
+                document.getElementById('battle-speech-text').textContent = '啪叽！臭鞋糊在皮皮怪脸上了！';
+
+                try {
+                    confetti({ particleCount: 60, spread: 80, origin: { y: 0.55 } });
+                } catch (e) {}
+
+                // Open interactive Shoe-Crack Modal
+                setTimeout(() => {
+                    openShoeCrackModal();
+                }, 900);
+            }, 750);
+        }
+
+        /* Punishment: Syringe Poke & Daddy Tickle */
+        function triggerTickleNeedlePunishment(option) {
+            state.isActionInProgress = true;
+            playNeedlePokeSound();
+
+            const needle = document.getElementById('poking-needle');
+            needle.classList.remove('hidden');
+            needle.classList.add('anim-needle-poke');
+            document.getElementById('battle-speech-text').textContent = '皮皮医生举着巨大痒痒针冲过来啦！';
+
+            speakVoice(`哎呀，这不是【${state.currWord.char}】哦！皮皮怪举着痒痒针来啦！爸爸快给椰子打一针痒痒针！`);
+
+            // Reaction overlay toast
+            const stamp = document.getElementById('reaction-stamp-box');
+            document.getElementById('reaction-stamp-icon').textContent = '💉🤣';
+            document.getElementById('reaction-stamp-title').textContent = '痒痒针注入——！';
+            document.getElementById('reaction-stamp-desc').textContent = '认错啦！爸爸快去呵椰子小肚皮的痒痒肉！';
+            stamp.classList.remove('hidden');
+
+            setTimeout(() => {
+                needle.classList.add('hidden');
+                needle.classList.remove('anim-needle-poke');
+                stamp.classList.add('hidden');
+                state.isActionInProgress = false;
+                document.getElementById('battle-speech-text').textContent = '再听一次读音，重新挑一个吧！';
+            }, 2000);
+        }
+
+        /* ========================================================
+           5. INTERACTIVE MYSTERY SHOE CRACK MODAL
+           ======================================================== */
+        function openShoeCrackModal() {
+            const item = state.currWord;
+            const modal = document.getElementById('shoe-crack-modal');
+            const unopened = document.getElementById('shoe-unopened-view');
+            const revealed = document.getElementById('shoe-monster-view');
+            const dialogue = document.getElementById('monster-dialogue-card');
+            const btnNext = document.getElementById('btn-modal-next-round');
+
+            document.getElementById('modal-shoe-emoji').textContent = item.shoeReward.emoji;
+            document.getElementById('revealed-monster-avatar').textContent = item.stinkyMonster.emoji;
+            document.getElementById('revealed-monster-name').textContent = item.stinkyMonster.name;
+            document.getElementById('monster-funny-quote').textContent = `“${item.stinkyMonster.funnyQuote}”`;
+
+            // Reset views
+            unopened.classList.remove('hidden');
+            revealed.classList.add('hidden');
+            dialogue.classList.add('hidden');
+            btnNext.classList.add('hidden');
+
+            modal.classList.remove('hidden');
+            speakVoice("臭鞋命中！快用小手指戳开它，看看里面藏着什么大怪兽！");
+
+            // Attach tap target listener
+            const tapTarget = document.getElementById('tap-shoe-target');
+            tapTarget.onclick = () => {
+                crackOpenShoe();
+            };
+        }
+
+        function crackOpenShoe() {
+            const item = state.currWord;
+            playFanfare();
+            try {
+                confetti({ particleCount: 70, spread: 90, origin: { y: 0.6 } });
+            } catch (e) {}
+
+            document.getElementById('shoe-unopened-view').classList.add('hidden');
+            document.getElementById('shoe-monster-view').classList.remove('hidden');
+            document.getElementById('monster-dialogue-card').classList.remove('hidden');
+            document.getElementById('btn-modal-next-round').classList.remove('hidden');
+
+            speakVoice(item.stinkyMonster.voiceLine, { pitch: 1.35, rate: 1.0 });
+
+            document.getElementById('tap-shoe-target').onclick = null;
+        }
+
+        // Replay monster voice line
+        document.getElementById('btn-replay-monster-voice').addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (state.currWord) {
+                speakVoice(state.currWord.stinkyMonster.voiceLine, { pitch: 1.35, rate: 1.0 });
+            }
+        });
+
+        // Continue to Next round from modal
+        document.getElementById('btn-modal-next-round').addEventListener('click', () => {
+            document.getElementById('shoe-crack-modal').classList.add('hidden');
+            setupRound(state.currWordIndex + 1);
+        });
+
+        /* ========================================================
+           6. CLOSET MUSEUM UI & TOAST
+           ======================================================== */
+        function updateClosetUI() {
+            const grid = document.getElementById('shoe-grid');
+            grid.innerHTML = '';
+            document.getElementById('closet-progress').textContent = `${state.unlockedShoes.length} / ${LITERACY_CATALOG.length}`;
+
+            LITERACY_CATALOG.forEach(catalogItem => {
+                const unlocked = state.unlockedShoes.some(s => s.name === catalogItem.shoeReward.name);
+                const card = document.createElement('div');
+                card.className = `p-2 rounded-2xl border-2 flex flex-col items-center justify-center text-center transition-all ${
+                    unlocked ? 'bg-amber-100 border-amber-400 shadow cursor-pointer active:scale-95' : 'bg-gray-100 border-gray-300 opacity-40'
+                }`;
+
+                card.innerHTML = `
+                    <div class="text-3xl md:text-4xl my-0.5">
+                        ${unlocked ? catalogItem.shoeReward.emoji : '🔒'}
+                    </div>
+                    <div class="text-xs font-black text-amber-950 truncate w-full">
+                        ${unlocked ? catalogItem.shoeReward.name : '未解锁'}
+                    </div>
+                    <div class="text-[10px] text-gray-500 font-bold truncate w-full">
+                        【${catalogItem.char}】
+                    </div>
+                `;
+
+                if (unlocked) {
+                    card.addEventListener('click', () => {
+                        playShoeLaunch();
+                        speakVoice(`这只鞋是：${catalogItem.shoeReward.name}！${catalogItem.shoeReward.smell} 里面住着${catalogItem.stinkyMonster.name}！`);
+                        showToast(catalogItem.shoeReward.emoji, `${catalogItem.shoeReward.name}: ${catalogItem.shoeReward.smell}`);
+                    });
+                }
+                grid.appendChild(card);
+            });
+        }
+
+        function showToast(icon, msg) {
+            const toast = document.getElementById('funny-toast');
+            document.getElementById('toast-icon').textContent = icon;
+            document.getElementById('toast-msg').textContent = msg;
+            toast.classList.remove('translate-y-36');
+
+            setTimeout(() => {
+                toast.classList.add('translate-y-36');
+            }, 2200);
+        }
+
+        /* ========================================================
+           7. EVENT LISTENERS
+           ======================================================== */
+        // Pinyin Initial Tap (声母发音)
+        document.getElementById('pinyin-initial-btn').addEventListener('click', (e) => {
+            e.stopPropagation();
+            initAudio();
+            if (state.currWord) {
+                pronounceInitial(state.currWord);
+                showToast("🗣️", `声母：${state.currWord.pinyinInitial}（发音轻短）`);
+            }
+        });
+
+        // Pinyin Final Tap (韵母发音)
+        document.getElementById('pinyin-final-btn').addEventListener('click', (e) => {
+            e.stopPropagation();
+            initAudio();
+            if (state.currWord) {
+                pronounceFinal(state.currWord);
+                showToast("🗣️", `韵母：${state.currWord.pinyinFinal}（带调发音）`);
+            }
+        });
+
+        // Whole Pinyin Word Tap (两拼相碰拼读)
+        document.getElementById('pinyin-full-btn').addEventListener('click', (e) => {
+            e.stopPropagation();
+            initAudio();
+            if (state.currWord) {
+                pronounceWholeSyllable(state.currWord);
+                showToast("📢", `拼读：${state.currWord.pinyinInitial} + ${state.currWord.pinyinFinal} = ${state.currWord.pinyin}`);
+            }
+        });
+
+        // Phonics Step-by-Step Teaching
+        document.getElementById('btn-teach-phonics').addEventListener('click', (e) => {
+            e.stopPropagation();
+            teachPinyinSpelling(state.currWord);
+        });
+
+        // Re-read current character with the full sequence
+        document.getElementById('btn-speak-again').addEventListener('click', (e) => {
+            e.stopPropagation();
+            initAudio();
+            if (state.currWord) {
+                playFullQuestionNarration(state.currWord);
+            }
+        });
+
+        // Next word manual skip
+        document.getElementById('btn-next-word').addEventListener('click', () => {
+            clearPromptTimers();
+            initAudio();
+            setupRound(state.currWordIndex + 1);
+        });
+
+        // Daddy Tickle Button
+        document.getElementById('btn-parent-tickle').addEventListener('click', () => {
+            clearPromptTimers();
+            initAudio();
+            playNeedlePokeSound();
+            speakVoice("嘀嘀嘀！超级痒痒针发射！爸爸快去呵椰子的痒痒肉！哈哈哈哈！");
+            showToast("🤣", "爸爸出动！给椰子打一针痒痒针！");
+        });
+
+        // Closet Modal Open / Close
+        document.getElementById('btn-open-closet').addEventListener('click', () => {
+            initAudio();
+            updateClosetUI();
+            document.getElementById('closet-modal').classList.remove('hidden');
+        });
+        document.getElementById('btn-close-closet').addEventListener('click', () => {
+            document.getElementById('closet-modal').classList.add('hidden');
+        });
+
+        // Smell All Shoes in Closet
+        document.getElementById('btn-smell-all').addEventListener('click', () => {
+            initAudio();
+            playShoeSplat();
+            try {
+                confetti({ particleCount: 50, spread: 70, origin: { y: 0.6 } });
+            } catch(e){}
+            speakVoice("哇！所有臭鞋一起开盖，整个房间都飘着七彩臭气啦！皮皮怪彻底投降啦！");
+            showToast("🦨💨", "超级连环臭气暴击！");
+        });
+
+        // Sound Mute Toggle
+        document.getElementById('btn-sound').addEventListener('click', () => {
+            state.soundEnabled = !state.soundEnabled;
+            document.getElementById('btn-sound').textContent = state.soundEnabled ? '🔊' : '🔇';
+            if (!state.soundEnabled && 'speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+            }
+        });
+
+        // First click unlock audio context
+        window.addEventListener('click', function unlockAudioOnce() {
+            initAudio();
+            window.removeEventListener('click', unlockAudioOnce);
+        }, { once: true });
+
+        // Initialize on load
+        window.addEventListener('load', () => {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.getVoices();
+                window.speechSynthesis.onvoiceschanged = () => {
+                    window.speechSynthesis.getVoices();
+                };
+            }
+            setupRound(0);
+        });
+    </script>
+</body>
+</html>
